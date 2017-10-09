@@ -1,6 +1,5 @@
 package com.sdpm.feedly.feedly;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -9,19 +8,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import model.Article;
 import model.Feed;
 
 public class Home extends AppCompatActivity {
 
-    List<Feed> feeds = new ArrayList<Feed>();
+    List<Article> articles = new ArrayList<Article>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,10 +35,9 @@ public class Home extends AppCompatActivity {
         ;
         /**************************************** put data from parsed xml in the feeds list *************************/
         /***********************************************************************************************************/
-        Feed f = new Feed("img","TITLE: This is a title This is a title his is a title this is a title this is a title","This is a description this is a description " +
-                "this is a description this is a description this is a description this is a description this is a description","foo bar","Thu, 05 Oct 2017 15:30:00");
+        Article f = new Article("TITLE: This is a title This is a title his is a title this is a title this is a title","",0,"this is a description this is a description this is a description this is a description this is a description","");
         for(int i=0;i<20;i++){
-            feeds.add(f);
+            articles.add(f);
         }
         /***********************************************************************************************************/
         /***********************************************************************************************************/
@@ -53,7 +48,7 @@ public class Home extends AppCompatActivity {
         rv.setLayoutManager(llm);
 
 
-        RVAdapter adapter = new RVAdapter(feeds);
+        RVAdapter adapter = new RVAdapter(articles);
         rv.setAdapter(adapter);
 
 

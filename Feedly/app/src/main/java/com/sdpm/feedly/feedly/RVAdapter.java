@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import model.Feed;
+import model.Article;
 
 /**
  * Created by Junaid on 10/5/2017.
@@ -18,10 +18,10 @@ import model.Feed;
 
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
-    List<Feed> feeds;
+    List<Article> articles;
 
-    RVAdapter(List<Feed> feeds){
-        this.feeds = feeds;
+    RVAdapter(List<Article> articles){
+        this.articles = articles;
     }
 
 
@@ -52,13 +52,13 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     @Override
     public void onBindViewHolder(FeedViewHolder holder, int position) {
         holder.feedImg.setImageResource(R.drawable.food);
-        holder.feedTitle.setText(feeds.get(position).getTitle());
-        holder.feedDesc.setText(feeds.get(position).getDesc());
-        holder.feedInfo.setText("by "+feeds.get(position).getAuthor()+" - "+feeds.get(position).getPubData());
+        holder.feedTitle.setText(articles.get(position).getTitle());
+        holder.feedDesc.setText(articles.get(position).getContent());
+        holder.feedInfo.setText("by "+articles.get(position).getAuthor()+" - ");
     }
 
     @Override
     public int getItemCount() {
-        return this.feeds.size();
+        return this.articles.size();
     }
 }

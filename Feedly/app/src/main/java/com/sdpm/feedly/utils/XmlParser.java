@@ -64,7 +64,7 @@ public class XmlParser {
 //                                currentRecord.setArtist(textValue);
                             } else if("description".equalsIgnoreCase(tagName)) {
 //                                currentRecord.setReleaseDate(textValue);
-                            }else if ("")
+                            }
 
                         }
                         break;
