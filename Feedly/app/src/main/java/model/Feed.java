@@ -12,7 +12,18 @@ public class Feed {
     String category;
     String description;
     String link;
+    String theXml;
     ArrayList<Article> articleList;
+
+    public Feed(String name, String category, String description, String link, ArrayList<Article> articleList) {
+        this.name = name;
+        this.category = category;
+        this.description = description;
+        this.link = link;
+        this.articleList = articleList;
+    }
+
+    public Feed(){}
 
     public String getName() {
         return name;
@@ -52,5 +63,13 @@ public class Feed {
 
     public void setArticleList(ArrayList<Article> articleList) {
         this.articleList = articleList;
+    }
+
+    public String getTheXml() {
+        return theXml;
+    }
+
+    public void setTheXml(String theXml) {
+        this.theXml = theXml;
     }
 }

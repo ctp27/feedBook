@@ -2,6 +2,7 @@ package com.sdpm.feedly.feedly;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +21,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     List<Article> articles;
 
-    RVAdapter(List<Article> articles){
+    public RVAdapter(List<Article> articles){
         this.articles = articles;
     }
 
@@ -49,12 +50,28 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         return fv;
     }
 
+
+//    TODO: Need to add functionality to download and display thumbnails in recylcer view
     @Override
     public void onBindViewHolder(FeedViewHolder holder, int position) {
         holder.feedImg.setImageResource(R.drawable.food);
         holder.feedTitle.setText(articles.get(position).getTitle());
-        holder.feedDesc.setText(articles.get(position).getContent());
-        holder.feedInfo.setText("by "+articles.get(position).getAuthor()+" - ");
+
+        String tempDesc = articles.get(position).getDescription();
+        if(tempDesc.length()<=25) {
+            holder.feedDesc.setText(Html.fromHtml(tempDesc));
+        }
+        else{
+            holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0,25)));
+        }
+        String author = articles.get(position).getAuthor();
+        if(author!=null) {
+
+            holder.feedInfo.setText("by " + articles.get(position).getAuthor() + " - ");
+        }
+        else{
+            holder.feedInfo.setText("by Feedly - ");
+        }
     }
 
     @Override

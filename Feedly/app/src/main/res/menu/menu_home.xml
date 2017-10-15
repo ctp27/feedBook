@@ -2,9 +2,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.sdpm.feedly.feedly.Home">
+
+
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:id="@+id/action_search"
+        android:orderInCategory="1"
+        android:title="Search"
+        app:showAsAction="ifRoom"
+        >
+
+    </item>
+    <item
+        android:id="@+id/optnDN"
+        android:orderInCategory="2"
+        android:title="The Daily Notebook"
+        app:showAsAction="ifRoom">
+
+    </item>
+    <item
+        android:id="@+id/optnIgn"
+        android:orderInCategory="3"
+        android:title="IGN"
+        app:showAsAction="ifRoom">
+
+    </item>
+    <item
+        android:id="@+id/optnF52"
+        android:orderInCategory="3"
+        android:title="Food52"
+        app:showAsAction="ifRoom">
+        
+    </item>
+
+    <item
+        android:id="@+id/optnSa"
+        android:orderInCategory="4"
+        android:title="Scientific American"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/optnEg"
+        android:orderInCategory="4"
+        android:title="Eurogamer"
+        app:showAsAction="never" />
+
 </menu>
