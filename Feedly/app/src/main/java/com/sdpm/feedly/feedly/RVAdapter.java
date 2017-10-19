@@ -1,5 +1,7 @@
 package com.sdpm.feedly.feedly;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -8,7 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import model.Article;
@@ -19,9 +23,9 @@ import model.Article;
 
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
-    List<Article> articles;
+    ArrayList<Article> articles;
 
-    public RVAdapter(List<Article> articles){
+    public RVAdapter(ArrayList<Article> articles){
         this.articles = articles;
     }
 
@@ -33,7 +37,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         TextView feedDesc;
         TextView feedInfo;
 
-        FeedViewHolder(View view){
+        FeedViewHolder(View view) {
             super(view);
             cv = (CardView) view.findViewById(R.id.cv);
             feedImg = (ImageView) view.findViewById(R.id.feed_photo);
@@ -53,7 +57,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
 //    TODO: Need to add functionality to download and display thumbnails in recylcer view
     @Override
-    public void onBindViewHolder(FeedViewHolder holder, int position) {
+    public void onBindViewHolder(FeedViewHolder holder,final int position) {
         holder.feedImg.setImageResource(R.drawable.food);
         holder.feedTitle.setText(articles.get(position).getTitle());
 
@@ -72,6 +76,15 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         else{
             holder.feedInfo.setText("by Feedly - ");
         }
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent("android.intent.action.feed.desc");
+                i.putExtra("position",position);
+                i.putExtra("articlesList",articles);
+                view.getContext().startActivity(i);
+            }
+        });
     }
 
     @Override

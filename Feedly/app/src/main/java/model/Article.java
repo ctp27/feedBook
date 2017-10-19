@@ -1,10 +1,15 @@
 package model;
 
+import android.support.design.internal.ParcelableSparseArray;
+
+import java.io.Serializable;
+import java.io.SerializablePermission;
+
 /**
  * Created by clinton on 10/9/17.
  */
 
-public class Article {
+public class Article implements Serializable {
 
 //    * commented fields wont be null
 

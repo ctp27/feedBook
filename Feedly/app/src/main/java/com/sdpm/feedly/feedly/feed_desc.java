@@ -1,8 +1,20 @@
 package com.sdpm.feedly.feedly;
 
+import android.annotation.TargetApi;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LevelListDrawable;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.transition.Visibility;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -11,14 +23,35 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.URLSpan;
+import android.text.util.Linkify;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +75,7 @@ public class feed_desc extends AppCompatActivity {
     private ViewPager mViewPager;
 
 
-    ArrayList<Article> articles = new ArrayList<Article>();
+    ArrayList<Article> articles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,12 +85,8 @@ public class feed_desc extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-        for(int i=0;i<5;i++){
-            Article f = new Article("TITLE: This is a title This is a title his is a title this is a title this is a title","",i,"this is a description this is a description this is a description this is a description this is a description","");
-            articles.add(f);
-        }
-
+        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
+        int position = getIntent().getIntExtra("position",0);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -66,7 +95,7 @@ public class feed_desc extends AppCompatActivity {
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-
+        mViewPager.setCurrentItem(position);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -110,8 +139,13 @@ public class feed_desc extends AppCompatActivity {
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
+        private static final String ARG_ARTICLE = "ARTICLE";
+        Article a;
+        TextView articleTitle;
+        TextView articleDesc;
+        ImageView articleImg;
+        Button linkButton;
+        View rootView;
         public PlaceholderFragment() {
         }
 
@@ -123,9 +157,9 @@ public class feed_desc extends AppCompatActivity {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
             if(article != null) {
-                args.putInt(ARG_SECTION_NUMBER, article.getId());
+                args.putSerializable(ARG_ARTICLE, article);
             } else {
-                args.putInt(ARG_SECTION_NUMBER, -1);
+                args.putString(ARG_ARTICLE, null);
             }
             fragment.setArguments(args);
             return fragment;
@@ -134,10 +168,121 @@ public class feed_desc extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+            Spanned spanned;
+            rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
+            a = (Article) getArguments().getSerializable(ARG_ARTICLE);
+            articleTitle = (TextView) rootView.findViewById(R.id.article_title);
+            articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
+            articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
+            linkButton = (Button) rootView.findViewById(R.id.article_link_button);
+            if(a.getLink() != null) {
+                linkButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent("android.intent.action.feed.webview");
+                        i.putExtra("URL", a.getLink());
+                        startActivity(i);
+                    }
+                });
+            }else {
+                linkButton.setVisibility(rootView.GONE);
+            }
+            articleTitle.setText(a.getTitle());
+            articleImg.setImageResource(R.drawable.food);
+
+            if (Build.VERSION.SDK_INT >= 24) {
+                spanned = Html.fromHtml(a.getDescription(),Html.FROM_HTML_MODE_LEGACY , new Html.ImageGetter() {
+                    @Override
+                    public Drawable getDrawable(String source) {
+                        LevelListDrawable d = new LevelListDrawable();
+                        Drawable empty = ContextCompat.getDrawable(getContext(),R.mipmap.ic_launcher);
+                        d.addLevel(0, 0, empty);
+                        d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
+
+                        new LoadImage().execute(source, d);
+
+                        return d;
+                    }
+                }, null);
+            } else {
+               spanned = Html.fromHtml(a.getDescription() , new Html.ImageGetter() {
+                    @Override
+                    public Drawable getDrawable(String source) {
+                        LevelListDrawable d = new LevelListDrawable();
+                        Drawable empty = ContextCompat.getDrawable(getContext(),R.mipmap.ic_launcher);
+                        d.addLevel(0, 0, empty);
+                        d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
+
+                        new LoadImage().execute(source, d);
+
+                        return d;
+                    }
+                }, null);
+            }
+            CharSequence sequence = spanned;
+            SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+            URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+            for(URLSpan span : urls) {
+                makeLinkClickable(strBuilder, span);
+            }
+            articleDesc.setText(strBuilder);
+            articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
+
             return rootView;
+        }
+
+        protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
+        {
+            final int start = strBuilder.getSpanStart(span);
+            final int end = strBuilder.getSpanEnd(span);
+            final int flags = strBuilder.getSpanFlags(span);
+            ClickableSpan clickable = new ClickableSpan() {
+                public void onClick(View view) {
+                    Intent i = new Intent("android.intent.action.feed.webview");
+                    i.putExtra("URL",span.getURL());
+                    startActivity(i);
+                }
+            };
+            strBuilder.setSpan(clickable, start, end, flags);
+            strBuilder.removeSpan(span);
+        }
+
+        class LoadImage extends AsyncTask<Object, Void, Bitmap> {
+
+            private LevelListDrawable mDrawable;
+
+            @Override
+            protected Bitmap doInBackground(Object... params) {
+                String source = (String) params[0];
+                mDrawable = (LevelListDrawable) params[1];
+                try {
+                    InputStream is = new URL(source).openStream();
+                    return BitmapFactory.decodeStream(is);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                if (bitmap != null) {
+                    BitmapDrawable d = new BitmapDrawable(getContext().getResources(),bitmap);
+                    int height = bitmap.getHeight();
+                    mDrawable.addLevel(1, 1, d);
+                    if(bitmap.getHeight() < getView().getWidth()) {
+                        height = getView().getWidth();
+                    }
+                    mDrawable.setBounds(0, 0, getView().getWidth(), height);
+                    mDrawable.setLevel(1);
+                    CharSequence t = articleDesc.getText();
+                    articleDesc.setText(t);
+                }
+            }
         }
     }
 
@@ -178,4 +323,5 @@ public class feed_desc extends AppCompatActivity {
             return null;
         }
     }
+
 }

@@ -40,6 +40,15 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.feed.desc" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".FeedWebView">
+            <intent-filter>
+                <action android:name="android.intent.action.feed.webview" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
