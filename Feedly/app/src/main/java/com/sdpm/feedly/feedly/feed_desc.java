@@ -1,6 +1,7 @@
 package com.sdpm.feedly.feedly;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -39,6 +40,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.view.ViewParent;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -46,6 +48,9 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.widget.ShareDialog;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -73,8 +78,6 @@ public class feed_desc extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-
-
     ArrayList<Article> articles;
 
     @Override
@@ -84,10 +87,11 @@ public class feed_desc extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
         int position = getIntent().getIntExtra("position",0);
-
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),articles);
@@ -96,18 +100,7 @@ public class feed_desc extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(position);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -126,8 +119,10 @@ public class feed_desc extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }else if(id == android.R.id.home){
+            finish();
+            return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -145,6 +140,7 @@ public class feed_desc extends AppCompatActivity {
         TextView articleDesc;
         ImageView articleImg;
         Button linkButton;
+        FloatingActionButton btnShareOnFB;
         View rootView;
         public PlaceholderFragment() {
         }
@@ -174,18 +170,25 @@ public class feed_desc extends AppCompatActivity {
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
+            btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
-            if(a.getLink() != null) {
+
+            if(a.getLink() != null && a.getLink() != "") {
+                btnShareOnFB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        shareOnFB(a.getLink());
+                    }
+                });
                 linkButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent i = new Intent("android.intent.action.feed.webview");
-                        i.putExtra("URL", a.getLink());
-                        startActivity(i);
+                        openWebViewActivity(a.getLink());
                     }
                 });
             }else {
-                linkButton.setVisibility(rootView.GONE);
+                btnShareOnFB.setVisibility(View.GONE);
+                linkButton.setVisibility(View.GONE);
             }
             articleTitle.setText(a.getTitle());
             articleImg.setImageResource(R.drawable.food);
@@ -231,20 +234,29 @@ public class feed_desc extends AppCompatActivity {
             return rootView;
         }
 
-        protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
+        private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
         {
             final int start = strBuilder.getSpanStart(span);
             final int end = strBuilder.getSpanEnd(span);
             final int flags = strBuilder.getSpanFlags(span);
             ClickableSpan clickable = new ClickableSpan() {
                 public void onClick(View view) {
-                    Intent i = new Intent("android.intent.action.feed.webview");
-                    i.putExtra("URL",span.getURL());
-                    startActivity(i);
+                    openWebViewActivity(span.getURL());
                 }
             };
             strBuilder.setSpan(clickable, start, end, flags);
             strBuilder.removeSpan(span);
+        }
+
+        private void shareOnFB(String url){
+            ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(Uri.parse(url)).build();
+            ShareDialog.show(this, content);
+        }
+
+        private void openWebViewActivity(String url){
+            Intent i = new Intent("android.intent.action.feed.webview");
+            i.putExtra("URL", url);
+            startActivity(i);
         }
 
         class LoadImage extends AsyncTask<Object, Void, Bitmap> {
