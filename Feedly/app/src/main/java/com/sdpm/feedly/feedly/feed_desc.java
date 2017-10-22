@@ -100,6 +100,9 @@ public class feed_desc extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(position);
+
+        int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
+        //mViewPager.setOffscreenPageLimit(limit);
     }
 
     @Override
@@ -172,65 +175,68 @@ public class feed_desc extends AppCompatActivity {
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
             btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
+            if(a != null) {
+                if (a.getLink() != null && a.getLink() != "") {
+                    btnShareOnFB.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            shareOnFB(a.getLink());
+                        }
+                    });
+                    linkButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            openWebViewActivity(a.getLink());
+                        }
+                    });
+                } else {
+                    btnShareOnFB.setVisibility(View.GONE);
+                    linkButton.setVisibility(View.GONE);
+                }
+                articleTitle.setText(a.getTitle());
+                articleImg.setImageResource(R.drawable.food);
 
-            if(a.getLink() != null && a.getLink() != "") {
-                btnShareOnFB.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        shareOnFB(a.getLink());
-                    }
-                });
-                linkButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openWebViewActivity(a.getLink());
-                    }
-                });
-            }else {
-                btnShareOnFB.setVisibility(View.GONE);
-                linkButton.setVisibility(View.GONE);
+                if (Build.VERSION.SDK_INT >= 24) {
+                    spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
+                        @Override
+                        public Drawable getDrawable(String source) {
+                            LevelListDrawable d = new LevelListDrawable();
+                            Drawable empty = ContextCompat.getDrawable(getContext(), R.mipmap.ic_launcher);
+                            d.addLevel(0, 0, empty);
+                            d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
+
+                            new LoadImage().execute(source, d);
+
+                            return d;
+                        }
+                    }, null);
+                } else {
+                    spanned = Html.fromHtml(a.getDescription(), new Html.ImageGetter() {
+                        @Override
+                        public Drawable getDrawable(String source) {
+                            if(!source.startsWith("http")){
+                                source = "http:" + source;
+                            }
+                            LevelListDrawable d = new LevelListDrawable();
+                            Drawable empty = ContextCompat.getDrawable(getContext(), R.mipmap.ic_launcher);
+                            d.addLevel(0, 0, empty);
+                            d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
+
+                            new LoadImage().execute(source, d);
+
+                            return d;
+                        }
+                    }, null);
+                }
+                CharSequence sequence = spanned;
+                SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+                URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+                for (URLSpan span : urls) {
+                    makeLinkClickable(strBuilder, span);
+                }
+                articleDesc.setText(strBuilder);
+                articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
-            articleTitle.setText(a.getTitle());
-            articleImg.setImageResource(R.drawable.food);
-
-            if (Build.VERSION.SDK_INT >= 24) {
-                spanned = Html.fromHtml(a.getDescription(),Html.FROM_HTML_MODE_LEGACY , new Html.ImageGetter() {
-                    @Override
-                    public Drawable getDrawable(String source) {
-                        LevelListDrawable d = new LevelListDrawable();
-                        Drawable empty = ContextCompat.getDrawable(getContext(),R.mipmap.ic_launcher);
-                        d.addLevel(0, 0, empty);
-                        d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
-
-                        new LoadImage().execute(source, d);
-
-                        return d;
-                    }
-                }, null);
-            } else {
-               spanned = Html.fromHtml(a.getDescription() , new Html.ImageGetter() {
-                    @Override
-                    public Drawable getDrawable(String source) {
-                        LevelListDrawable d = new LevelListDrawable();
-                        Drawable empty = ContextCompat.getDrawable(getContext(),R.mipmap.ic_launcher);
-                        d.addLevel(0, 0, empty);
-                        d.setBounds(0, 0, empty.getIntrinsicWidth(), empty.getIntrinsicHeight());
-
-                        new LoadImage().execute(source, d);
-
-                        return d;
-                    }
-                }, null);
-            }
-            CharSequence sequence = spanned;
-            SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
-            URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
-            for(URLSpan span : urls) {
-                makeLinkClickable(strBuilder, span);
-            }
-            articleDesc.setText(strBuilder);
-            articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
-
             return rootView;
         }
 
@@ -290,6 +296,11 @@ public class feed_desc extends AppCompatActivity {
                         height = getView().getWidth();
                     }
                     mDrawable.setBounds(0, 0, getView().getWidth(), height);
+                    mDrawable.setLevel(1);
+                    CharSequence t = articleDesc.getText();
+                    articleDesc.setText(t);
+                }else {
+                    mDrawable.setBounds(0, 0, 0, 0);
                     mDrawable.setLevel(1);
                     CharSequence t = articleDesc.getText();
                     articleDesc.setText(t);

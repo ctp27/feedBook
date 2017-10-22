@@ -28,7 +28,7 @@ import static android.content.ContentValues.TAG;
  */
 
 
-public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>>  {
+public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     public static final String EXPLORE_FEEDS="EXPLORE";
     public static final String TODAY = "T0DAY";
@@ -49,10 +49,8 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      */
 
     public DownloadXml(RecyclerView recyclerView, String action){
-
         this.action = action;
         this.recyclerView = recyclerView;
-
     }
 
     /**
@@ -62,28 +60,17 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      *
      * TODO: Update this accordingly based on the front end Recycler view.
      * TODO: Right now I have set it to display the articles of just one feed. (See line 76)
-     * @param theFeeds  The arrayList of Feeds with the downloaded XML
+     * @param theFeed  The object of Feed with the downloaded XML
      */
 
-    private void displayExploreFeeds(ArrayList<Feed> theFeeds){
+    private void displayExploreFeeds(Feed theFeed){
+            XmlParser parser = new XmlParser();
+            parser.parse(theFeed.getTheXml());
+            theFeed.setArticleList(parser.getApplications());
 
-            for(Feed f : theFeeds){
-                XmlParser parser = new XmlParser();
-                parser.parse(f.getTheXml());
-                f.setArticleList(parser.getApplications());
-            }
-
-            RVAdapter theAdapter = new RVAdapter(theFeeds.get(2).getArticleList());
+            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList());
             recyclerView.setAdapter(theAdapter);
-
-//     Prints all articles in the log. For debugging
-
-                for(Article a:theFeeds.get(2).getArticleList()){
-                    Log.d("Entry",a.toString());
-                }
     }
-
-
 
     /**
      * This method loops through the list of parsed feeds and accordingly updates the
@@ -95,9 +82,6 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      */
 
     private void displayTodaysFeeds(ArrayList<Feed> theFeeds){
-
-
-
     }
 
 
@@ -111,9 +95,6 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      */
 
     private void displayReadLaterFeeds(ArrayList<Feed> theFeeds){
-
-
-
     }
 
     /**
@@ -121,31 +102,27 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      * This method checks the action to be performed, which is set while instantiating this class.
      * Based on the action, it calls the appropriate method using switch case
      *
-     * @param theFeeds Temperature in degrees Celsius (°C)
+     * @param theFeed Temperature in degrees Celsius (°C)
      */
 
     @Override
-    protected void onPostExecute(ArrayList<Feed> theFeeds) {
-            super.onPostExecute(theFeeds);
+    protected void onPostExecute(Feed theFeed) {
+        super.onPostExecute(theFeed);
 
-            switch(action){
+        switch (action) {
 
-                case DownloadXml.EXPLORE_FEEDS:
-                    displayExploreFeeds(theFeeds);
-                    break;
-                case DownloadXml.TODAY:
-                    displayTodaysFeeds(theFeeds);
-                    break;
-                case DownloadXml.READLATER:
-                    displayReadLaterFeeds(theFeeds);
-                    break;
+            case DownloadXml.EXPLORE_FEEDS:
+                displayExploreFeeds(theFeed);
+                break;
+            case DownloadXml.TODAY:
+//                    displayTodaysFeeds(theFeeds);
+                break;
+            case DownloadXml.READLATER:
+//                    displayReadLaterFeeds(theFeeds);
+                break;
 
-                    default:
-
-
-            }
-
-
+            default:
+        }
     }
 
     /**
@@ -158,22 +135,17 @@ public class DownloadXml extends AsyncTask<ArrayList<Feed>,Void, ArrayList<Feed>
      */
 
     @Override
-    protected ArrayList<Feed> doInBackground(ArrayList<Feed>... params) {
+    protected Feed doInBackground(Feed... params) {
 
-        ArrayList<Feed> theFeeds = params[0];
-
-        for(Feed f: theFeeds){
-            String s = downloadXML(f.getLink());
-            if (s == null) {
-                Log.e(TAG, "doInBackground: Error downloading");
-            }
-            else {
-                f.setTheXml(s);
-            }
+        Feed theFeed = params[0];
+        String s = downloadXML(theFeed.getLink());
+        if (s == null) {
+            Log.e(TAG, "doInBackground: Error downloading");
         }
-
-        return theFeeds;
-
+        else {
+            theFeed.setTheXml(s);
+        }
+        return theFeed;
     }
 
     /**

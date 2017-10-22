@@ -1,12 +1,13 @@
 package model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by Junaid on 10/5/2017.
  */
 
-public class Feed {
+public class Feed implements Serializable {
 
     String name;
     String category;
