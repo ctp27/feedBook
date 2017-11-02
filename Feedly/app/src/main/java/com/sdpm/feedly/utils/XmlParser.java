@@ -78,6 +78,7 @@ public class XmlParser {
 //                        Log.d(TAG, "parse: Ending tag for " + tagName);
                         if(inEntry) {
                             if("item".equalsIgnoreCase(tagName) || "entry".equalsIgnoreCase(tagName)) {
+                                setTheThumbnail(currentRecord);
                                 applications.add(currentRecord);
                                 inEntry = false;
                             } else if("title".equalsIgnoreCase(tagName)) {
@@ -141,6 +142,57 @@ public class XmlParser {
         }
 
         return status;
+    }
+
+    /**
+     * This method sets the thumbnailLink field for each article entry.
+     * If no thumbnail is found, it sets the first image from the description (if present) as
+     * the thumbnail.
+     * If no images are found in the entire feed, it sets the thumbnailLink to null
+     * @param article the list of articles whose thumbnails have to be set.
+     */
+
+    private void setTheThumbnail(Article article) {
+
+            String theUrl = null;
+
+            theUrl = article.getThumbnailLink();
+
+            if (theUrl == null) {
+                String tempDesc = article.getDescription();
+                if (HtmlParseUtils.containsHtml(tempDesc)) {
+                    theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
+                    setTheUrl(theUrl,article);
+                }
+            }else {
+                setTheUrl(theUrl,article);
+            }
+
+    }
+
+    /**
+     * This method is used by the setTheThumbnail() method. It simply sets the URL after
+     * checking whether it is valid. Also adds http to some relative URLS found in some feeds.
+     * This method is used internally by the setTheThumbnail()
+     * @param theUrl theUrl to be checked
+     * @param a the article in which the URL is to be set
+     */
+
+    private void setTheUrl(String theUrl, Article a) {
+        if (!theUrl.isEmpty()) {
+            if (HtmlParseUtils.isValidUrl(theUrl)) {
+                a.setThumbnailLink(theUrl);
+            } else {
+                theUrl = "https:" + theUrl;
+                if (HtmlParseUtils.isValidUrl(theUrl)) {
+                    a.setThumbnailLink(theUrl);
+                } else {
+                    a.setThumbnailLink(null);
+                }
+            }
+        } else {
+            a.setThumbnailLink(null);
+        }
     }
 
 }

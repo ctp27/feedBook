@@ -15,7 +15,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
-import model.Article;
 import model.Feed;
 
 import static android.content.ContentValues.TAG;
@@ -68,9 +67,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     private void displayExploreFeeds(Feed theFeed){
             XmlParser parser = new XmlParser();
             parser.parse(theFeed.getTheXml());
-            ArrayList<Article> theArticles = parser.getApplications();
-            setTheThumbnails(theArticles);
-            theFeed.setArticleList(theArticles);
+            theFeed.setArticleList(parser.getApplications());
 
             RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context);
             recyclerView.setAdapter(theAdapter);
@@ -155,63 +152,6 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
         }
         return theFeed;
     }
-
-
-    /**
-     * This method sets the thumbnailLink field for all the articles for further use.
-     * If no thumbnail is found, it sets the first image from the description (if present) as
-     * the thumbnail.
-     * If no images are found in the entire feed, it sets the thumbnailLink to null
-     * TODO: USE THIS METHOD IMMEDIATELY AFTER PARSING!
-     * @param theArticles the list of articles whose thumbnails have to be set.
-     */
-
-    private void setTheThumbnails(ArrayList<Article> theArticles) {
-
-        String theUrl = null;
-        for(Article a : theArticles) {
-            theUrl = a.getThumbnailLink();
-
-            if (theUrl == null) {
-                String tempDesc = a.getDescription();
-                if (HtmlParseUtils.containsHtml(tempDesc)) {
-                    theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
-                    setTheUrl(theUrl,a);
-                }
-            }else {
-                setTheUrl(theUrl,a);
-            }
-
-
-        }
-    }
-
-    /**
-     * This method is used by the setTheThumbnail() method. It simply sets the URL after
-     * checking whether it is valid. Also adds http to some relative URLS found in some feeds.
-     * This method is used internally by the setTheThumbnail()
-     * @param theUrl theUrl to be checked
-     * @param a the article in which the URL is to be set
-     */
-
-    private void setTheUrl(String theUrl, Article a) {
-        if (!theUrl.isEmpty()) {
-            if (HtmlParseUtils.isValidUrl(theUrl)) {
-                a.setThumbnailLink(theUrl);
-            } else {
-                theUrl = "https:" + theUrl;
-                if (HtmlParseUtils.isValidUrl(theUrl)) {
-                    a.setThumbnailLink(theUrl);
-                } else {
-                    a.setThumbnailLink(null);
-                }
-            }
-        } else {
-            a.setThumbnailLink(null);
-        }
-    }
-
-
 
     /**
      * This method takes in the URL of the feed as a parameter. It contains the operations to download
