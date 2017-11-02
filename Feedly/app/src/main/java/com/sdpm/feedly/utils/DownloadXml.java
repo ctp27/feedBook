@@ -1,5 +1,6 @@
 package com.sdpm.feedly.utils;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -36,7 +37,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     private RecyclerView recyclerView;
     private String action;
-
+    private Context context;
     /**
      * The constructor takes in the recycler view and the action to be performed post download as
      * parameters. The recycler view is used to update the view. The action determines what
@@ -48,7 +49,8 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
      */
 
-    public DownloadXml(RecyclerView recyclerView, String action){
+    public DownloadXml(Context context, RecyclerView recyclerView, String action){
+        this.context=context;
         this.action = action;
         this.recyclerView = recyclerView;
     }
@@ -66,10 +68,30 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     private void displayExploreFeeds(Feed theFeed){
             XmlParser parser = new XmlParser();
             parser.parse(theFeed.getTheXml());
-            theFeed.setArticleList(parser.getApplications());
+            ArrayList<Article> theArticles = parser.getApplications();
+            theFeed.setArticleList(theArticles);
 
-            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList());
+            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context);
             recyclerView.setAdapter(theAdapter);
+
+            if(theFeed.getName().equalsIgnoreCase("Food52")){
+                ArrayList<Article> articles = theFeed.getArticleList();
+                for(Article a : articles){
+                    String theLink="";
+                    try {
+                         theLink = HtmlParseUtils.getImageUrlFromDescription(a.getDescription());
+                        URL url = new URL(theLink);
+                    } catch (MalformedURLException e) {
+                        Log.d(TAG, "Not having "+theLink);
+                    }
+                }
+            }
+//            ArrayList<Article> articles = theFeed.getArticleList();
+//            for(Article a : articles){
+//                String url = HtmlParseUtils.getImageUrlFromDescription(a.getDescription());
+////                Log.d(TAG,a.getDescription());
+//            }
+
     }
 
     /**

@@ -1,24 +1,21 @@
 package com.sdpm.feedly.feedly;
 
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import android.widget.TextView;
 
 import com.sdpm.feedly.utils.DownloadXml;
 
@@ -44,6 +41,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      */
     private ViewPager mViewPager;
     private ArrayList<Feed> theFeeds;
+
+
     {
         theFeeds= new ArrayList<>();
         theFeeds.add(new Feed("The Daily Notebook","Film","","https://mubi.com/notebook/posts.atom",new ArrayList<Article>()));
@@ -59,6 +58,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_nav);
 
+        /**
+         * TODO: action should be assigned based on the usersettings
+         */
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
@@ -72,6 +76,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
         mViewPager.setOffscreenPageLimit(limit);
+
         if(theFeeds != null) {
             getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
         }
@@ -170,8 +175,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
 
         private void displayFeed(){
-            DownloadXml theDownloader = new DownloadXml(rv,DownloadXml.EXPLORE_FEEDS);
-            theDownloader.execute(feed);
+            DownloadXml downloadXml = new DownloadXml(getContext(),rv,DownloadXml.EXPLORE_FEEDS);
+            downloadXml.execute(feed);
             feedCachedUrl = feed.getLink();
         }
     }
@@ -211,5 +216,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
            }
             return null;
         }
+
+
+
     }
+
+
+
 }

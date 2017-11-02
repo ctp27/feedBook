@@ -10,10 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.sdpm.feedly.utils.HtmlParseUtils;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import model.Article;
 
@@ -24,11 +25,12 @@ import model.Article;
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     ArrayList<Article> articles;
+    private Context context;
 
-    public RVAdapter(ArrayList<Article> articles){
+    public RVAdapter(ArrayList<Article> articles, Context context) {
         this.articles = articles;
+        this.context = context;
     }
-
 
     public static class FeedViewHolder extends RecyclerView.ViewHolder{
         CardView cv;
@@ -58,16 +60,15 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 //    TODO: Need to add functionality to download and display thumbnails in recylcer view
     @Override
     public void onBindViewHolder(FeedViewHolder holder,final int position) {
-        holder.feedImg.setImageResource(R.drawable.food);
-        holder.feedTitle.setText(articles.get(position).getTitle());
 
-        String tempDesc = articles.get(position).getDescription();
-        if(tempDesc.length()<=25) {
-            holder.feedDesc.setText(Html.fromHtml(tempDesc));
-        }
-        else{
-            holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0,25)));
-        }
+        holder.feedTitle.setText(articles.get(position).getTitle());
+        /**
+         * Method sets the image URL
+         */
+        setTheRowImage(holder,position);
+
+        setThePartialDescription(holder,position);
+
         String author = articles.get(position).getAuthor();
         if(author!=null) {
 
@@ -76,6 +77,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         else{
             holder.feedInfo.setText("by Feedly - ");
         }
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -87,8 +89,66 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         });
     }
 
+    private void setThePartialDescription(FeedViewHolder holder, int position) {
+        String tempDesc = articles.get(position).getDescription();
+        if(HtmlParseUtils.containsHtml(tempDesc)){
+            /**
+             * If html then do this
+             */
+            holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
+        }
+        else {
+            /**
+             * If Not html then do this
+             */
+            if (tempDesc.length() <= 89) {
+                holder.feedDesc.setText(Html.fromHtml(tempDesc));
+            } else {
+                holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+            }
+        }
+    }
+
+    private void setTheRowImage(FeedViewHolder holder, int position) {
+        String theUrl = null;
+
+        theUrl = articles.get(position).getThumbnailLink();
+
+        if(theUrl==null){
+            String tempDesc = articles.get(position).getDescription();
+            if(HtmlParseUtils.containsHtml(tempDesc)) {
+                theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
+            }else{
+                holder.feedImg.setImageResource(R.drawable.feed);
+                return;
+            }
+        }
+        if(!theUrl.isEmpty()) {
+            if(HtmlParseUtils.isValidUrl(theUrl)) {
+                Picasso.with(context).load(theUrl).error(R.drawable.feed)
+                        .placeholder(R.drawable.feed)
+                        .into(holder.feedImg);
+            }
+            else{
+                theUrl = "https:"+theUrl;
+                if(HtmlParseUtils.isValidUrl(theUrl)){
+                    Picasso.with(context).load(theUrl).error(R.drawable.feed)
+                            .placeholder(R.drawable.feed)
+                            .into(holder.feedImg);
+                }
+                else {
+                    holder.feedImg.setImageResource(R.drawable.feed);
+                }
+            }
+        }else {
+            holder.feedImg.setImageResource(R.drawable.feed);
+        }
+    }
+
     @Override
     public int getItemCount() {
         return this.articles.size();
     }
+
+
 }

@@ -1,9 +1,6 @@
 package model;
 
-import android.support.design.internal.ParcelableSparseArray;
-
 import java.io.Serializable;
-import java.io.SerializablePermission;
 
 /**
  * Created by clinton on 10/9/17.
@@ -38,6 +35,8 @@ public class Article implements Serializable {
     private String content;
 
     private String thumbnailLink;
+
+
 
     public Article(String title, String link, String summary, String author, String description, String publishedDate, int id) {
         this.title = title;
@@ -123,6 +122,8 @@ public class Article implements Serializable {
     public void setThumbnailLink(String thumbnailLink) {
         this.thumbnailLink = thumbnailLink;
     }
+
+
 
     @Override
     public String toString() {

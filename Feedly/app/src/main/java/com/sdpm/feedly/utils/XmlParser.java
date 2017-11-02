@@ -1,7 +1,5 @@
 package com.sdpm.feedly.utils;
 
-import android.util.Log;
-
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
@@ -64,6 +62,12 @@ public class XmlParser {
                             inEntry = true;
                             currentRecord = new Article();
                         }
+                        else if("content".equalsIgnoreCase(tagName)){
+                            String temp = xpp.getAttributeValue(null,"url");
+                                if(temp!=null) {
+                                    currentRecord.setThumbnailLink(xpp.getAttributeValue(null, "url"));
+                                }
+                        }
                         break;
 
                     case XmlPullParser.TEXT:
@@ -85,9 +89,10 @@ public class XmlParser {
                             } else if("description".equalsIgnoreCase(tagName)
                                         || "content".equalsIgnoreCase(tagName)) {
 
-                                if(currentRecord.getDescription()==null) {
+                                if(prefix==null) {
                                     currentRecord.setDescription(textValue);
                                 }
+
                             } else if("summary".equalsIgnoreCase(tagName)) {
                                 currentRecord.setSummary(textValue);
                             } else if("pubdate".equalsIgnoreCase(tagName)
@@ -112,8 +117,7 @@ public class XmlParser {
                                 }
                             }
                             else if("thumbnail".equalsIgnoreCase(tagName)) {
-                                Log.d("tagName",tagName);
-                                currentRecord.setThumbnailLink(textValue);
+                                currentRecord.setThumbnailLink(xpp.getAttributeValue(null, "url"));
                             }
 
                         }
