@@ -30,6 +30,11 @@ public class HtmlParseUtils {
 
     }
 
+    /**
+     * This method parses a string containing HTML tags and extracts the text only.
+     * @param htmlString the String containing HTML
+     * @return returns a string with only text
+     */
 
     public static String getPartialDescription(String htmlString){
 
@@ -42,7 +47,12 @@ public class HtmlParseUtils {
 
     }
 
-
+    /**
+     * This method extracts the first image url it finds in the given string.
+     *
+     * @param theDescription the String containing HTML with img tags
+     * @return returns the URL of the first image found. Returns an empty string if no images.
+     */
     public static String getImageUrlFromDescription(String theDescription){
 
         String url="";
@@ -61,6 +71,12 @@ public class HtmlParseUtils {
 
         return url;
     }
+
+    /**
+     * Method which checks if the URL passes is a valid URL or not
+     * @param theUrl the string containing the URL
+     * @return returns true if URL is valid. False if URL is not valid
+     */
 
     public static boolean isValidUrl(String theUrl){
         try {

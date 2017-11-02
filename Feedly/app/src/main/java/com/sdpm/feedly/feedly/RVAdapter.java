@@ -62,9 +62,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     public void onBindViewHolder(FeedViewHolder holder,final int position) {
 
         holder.feedTitle.setText(articles.get(position).getTitle());
-        /**
-         * Method sets the image URL
-         */
+
+        /* Method sets the imageView for the current position*/
         setTheRowImage(holder,position);
 
         setThePartialDescription(holder,position);
@@ -89,6 +88,15 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         });
     }
 
+
+    /**
+     * This method sets the partial description in the RecyclerView. If the description contains
+     * HTML, it extracts the text and displays it. The partial description just displays a string
+     * of 90 characters
+     * @param holder the FeedViewHolder object which contains the front end components
+     * @param position the current row position to be set
+     */
+
     private void setThePartialDescription(FeedViewHolder holder, int position) {
         String tempDesc = articles.get(position).getDescription();
         if(HtmlParseUtils.containsHtml(tempDesc)){
@@ -109,38 +117,22 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         }
     }
 
+    /**
+     * Private method called by the onBindViewHolder() method of the recycler view. This method
+     * sets the ImageView in the recycler view using the link in the ThumbnailLink field. If the
+     * field is null, it displays the default placeholder image
+     *
+     * @param holder theFeedViewHolder object that contains the imageView
+     * @param position the current row position of the recycler view
+     */
     private void setTheRowImage(FeedViewHolder holder, int position) {
-        String theUrl = null;
-
-        theUrl = articles.get(position).getThumbnailLink();
-
-        if(theUrl==null){
-            String tempDesc = articles.get(position).getDescription();
-            if(HtmlParseUtils.containsHtml(tempDesc)) {
-                theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
-            }else{
-                holder.feedImg.setImageResource(R.drawable.feed);
-                return;
-            }
-        }
-        if(!theUrl.isEmpty()) {
-            if(HtmlParseUtils.isValidUrl(theUrl)) {
-                Picasso.with(context).load(theUrl).error(R.drawable.feed)
+        String thumbnail= articles.get(position).getThumbnailLink();
+        if(thumbnail!=null){
+            Picasso.with(context).load(thumbnail).error(R.drawable.feed)
                         .placeholder(R.drawable.feed)
                         .into(holder.feedImg);
-            }
-            else{
-                theUrl = "https:"+theUrl;
-                if(HtmlParseUtils.isValidUrl(theUrl)){
-                    Picasso.with(context).load(theUrl).error(R.drawable.feed)
-                            .placeholder(R.drawable.feed)
-                            .into(holder.feedImg);
-                }
-                else {
-                    holder.feedImg.setImageResource(R.drawable.feed);
-                }
-            }
-        }else {
+        }
+        else{
             holder.feedImg.setImageResource(R.drawable.feed);
         }
     }
