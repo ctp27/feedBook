@@ -100,15 +100,11 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     private void setThePartialDescription(FeedViewHolder holder, int position) {
         String tempDesc = articles.get(position).getDescription();
         if(HtmlParseUtils.containsHtml(tempDesc)){
-            /**
-             * If html then do this
-             */
+//             * If html then do this
             holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
         }
         else {
-            /**
-             * If Not html then do this
-             */
+//             * If Not html then do this
             if (tempDesc.length() <= 89) {
                 holder.feedDesc.setText(Html.fromHtml(tempDesc));
             } else {
@@ -125,6 +121,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
      * @param holder theFeedViewHolder object that contains the imageView
      * @param position the current row position of the recycler view
      */
+
     private void setTheRowImage(FeedViewHolder holder, int position) {
         String thumbnail= articles.get(position).getThumbnailLink();
         if(thumbnail!=null){

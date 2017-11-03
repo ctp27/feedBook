@@ -45,7 +45,7 @@ public class XmlParser {
         Article currentRecord = null;
         boolean inEntry = false;
         String textValue = "";
-
+        
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             factory.setNamespaceAware(true);
