@@ -26,7 +26,10 @@
 
         <activity
             android:name=".LoginActivity"
-            android:label="@string/app_name"></activity>
+            android:label="@string/app_name"
+            android:noHistory="true">
+
+        </activity>
         <activity
             android:name=".feed_desc"
             android:label="@string/title_activity_feed_desc"
@@ -54,11 +57,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".SignUpActivity" />
-        <activity
-            android:name=".LandingPageActivity"
-            android:noHistory="true"
-            android:theme="@style/generalnotitle">
+        <activity android:name=".SignUpActivity"
+            android:noHistory="true"/>
+        <activity android:name=".LandingPageActivity"
+            android:theme="@style/generalnotitle"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
