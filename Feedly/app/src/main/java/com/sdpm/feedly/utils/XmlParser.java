@@ -62,10 +62,24 @@ public class XmlParser {
                             inEntry = true;
                             currentRecord = new Article();
                         }
+                        else if("thumbnail".equalsIgnoreCase(tagName)){
+                            String temp = xpp.getAttributeValue(null,"url");
+                            if(currentRecord!=null && temp!=null) {
+                                currentRecord.setThumbnailLink(temp);
+                            }
+                        }
                         else if("content".equalsIgnoreCase(tagName)){
                             String temp = xpp.getAttributeValue(null,"url");
-                                if(temp!=null) {
-                                    currentRecord.setThumbnailLink(xpp.getAttributeValue(null, "url"));
+                            if(currentRecord!=null && temp!=null) {
+                                if(currentRecord.getThumbnailLink()==null) {
+                                    currentRecord.setThumbnailLink(temp);
+                                }
+                            }
+                        }
+                        else if("link".equalsIgnoreCase(tagName)){
+                            String temp = xpp.getAttributeValue(null,"href");
+                                if(currentRecord!=null) {
+                                    currentRecord.setLink(temp);
                                 }
                         }
                         break;
@@ -86,7 +100,9 @@ public class XmlParser {
                             } else if("link".equalsIgnoreCase(tagName)
                                         || "id".equalsIgnoreCase(tagName)
                                         || "feedburner:origlink".equalsIgnoreCase(tagName)) {
-                                currentRecord.setLink(textValue);
+                                if(currentRecord.getLink()==null){
+                                    currentRecord.setLink(textValue);
+                                }
                             } else if("description".equalsIgnoreCase(tagName)
                                         || "content".equalsIgnoreCase(tagName)) {
 

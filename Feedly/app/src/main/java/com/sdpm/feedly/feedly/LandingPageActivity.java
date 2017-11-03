@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 
 public class LandingPageActivity extends AppCompatActivity {
 
-    public static final String token = "Logg";
+    public static final String token = "Logged";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
