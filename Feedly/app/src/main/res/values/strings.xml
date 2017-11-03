@@ -1,5 +1,20 @@
 <resources>
+
+    // Login Page
     <string name="app_name">Feedly</string>
+    <string name="email_id">Email-ID</string>
+    <string name="password">password</string>
+    <string name="button_login">Login</string>
+    <string name="sign_up_message">Don\'t have an account? Sign Up Below</string>
+    <string name="button_sign_up">Sign Up</string>
+    <string name="login_to_feedly_message">Login to Feedly</string>
+    <string name="button_forgot_password">Forgot Password ?</string>
+
+    // SignUp Page
+    <string name="sign_up_to_feedly_message">Sign Up To Feedly</string>
+    <string name="full_name">Full name</string>
+    <string name="button_create_account">Create My Account</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
