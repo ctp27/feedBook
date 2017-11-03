@@ -28,8 +28,8 @@ public class LoginActivity extends AppCompatActivity {
         final Button b_forgot_password = (Button) findViewById(R.id.button_forgot_password);
 
 
-        final String dummy_user="harsha";
-        final String dummy_pass="jasti";
+        final String dummy_user="feedly";
+        final String dummy_pass="feedly";
 
         // Buttons
         b_login.setOnClickListener(new View.OnClickListener() {
