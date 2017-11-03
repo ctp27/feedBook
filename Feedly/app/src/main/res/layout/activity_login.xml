@@ -76,14 +76,6 @@
         android:layout_centerHorizontal="true"
         />
 
-    <Button
-        android:id="@+id/button_forgot_password"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:text="@string/button_forgot_password"
-        android:layout_below="@+id/button_sign_up"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp" />
 
 </RelativeLayout>
 
