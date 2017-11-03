@@ -56,13 +56,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home_nav);
+        setContentView(R.layout.activity_no_login_side_nav);
 
         /**
          * TODO: action should be assigned based on the usersettings
          */
-
-
+        
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
