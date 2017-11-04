@@ -200,6 +200,9 @@ public class feed_desc extends AppCompatActivity {
                     spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
+                            if(!source.startsWith("http")){
+                                source = "http:" + source;
+                            }
                             LevelListDrawable d = new LevelListDrawable();
                             Drawable empty = ContextCompat.getDrawable(getContext(), R.mipmap.ic_launcher);
                             d.addLevel(0, 0, empty);

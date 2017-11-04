@@ -6,15 +6,27 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class SignUpActivity extends AppCompatActivity {
 
+    DatabaseReference database;
     // setting registration success to false as default
     boolean success = false;
+    boolean existingUser = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +39,7 @@ public class SignUpActivity extends AppCompatActivity {
         final EditText et_email_id = (EditText) findViewById(R.id.email_id);
         final EditText et_password = (EditText) findViewById(R.id.password);
         final Button button_register = (Button) findViewById(R.id.button_register);
+        final Button button_back_to_login = (Button) findViewById(R.id.button_back_to_login);
 
         // Registration Button
         button_register.setOnClickListener(new View.OnClickListener() {
@@ -62,7 +75,6 @@ public class SignUpActivity extends AppCompatActivity {
                     success=false;
                     return;
                 }
-
                 // Checking if password is empty
                 else if (password.matches("")){
                     Toast.makeText(getApplicationContext(), "You did not enter a password", Toast.LENGTH_SHORT).show();
@@ -74,28 +86,64 @@ public class SignUpActivity extends AppCompatActivity {
                 else{
 
                     // Checking if email Id is valid
-                    if (email.contains("@")){
+                    if (Patterns.EMAIL_ADDRESS.matcher(email).matches()){
                         success = true;
                     }
 
                     // Registration is successful; changing success to true
                     else {
-                        Toast.makeText(getApplicationContext(), "Email-ID doesn't seem right", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Please enter valid Email Id", Toast.LENGTH_SHORT).show();
                         success=false;
                     }
                 }
 
                 // Navigating to the Home Page
                 if (success) {
+                    database = FirebaseDatabase.getInstance().getReference();
+                    existingUser = false;
+                    database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if(snapshot.child("email_id").getValue().toString().equalsIgnoreCase(email)){
+                                    existingUser = true;
+                                    break;
+                                }
+                            }
+                            if(existingUser){
+                                Toast.makeText(getApplicationContext(),"Email Id is already registered",Toast.LENGTH_SHORT).show();
+                            }else {
+                                Map m = new HashMap();
+                                m.put("full_name",fullname);
+                                m.put("email_id",email);
+                                m.put("password", password);
+                                database.child("Users").push().setValue(m);
+                                Intent intent = new Intent(SignUpActivity.this, HomeNav.class);
+                                startActivity(intent);
+                            }
+                        }
 
-                    Toast.makeText(getApplicationContext(), "Registration Successful", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(SignUpActivity.this, HomeNav.class);
-                    startActivity(intent);
+                        @Override
+                        public void onCancelled(DatabaseError d){
+                            Log.d("Login DbError Msg ->",d.getMessage());
+                            Log.d("Login DbError Detail ->",d.getDetails());
+                        }
+                    });
                 }
 
             }
         });
+
+        button_back_to_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
     }
 }
 

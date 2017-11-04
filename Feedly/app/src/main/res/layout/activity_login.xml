@@ -20,16 +20,16 @@
 
     <EditText
         android:id="@+id/email_id"
-        android:inputType="textEmailAddress"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:hint="@string/email_id"
-        android:textAlignment="center"
-        android:background="@drawable/edittextbackground"
-        android:layout_marginTop="20dp"
-        android:layout_below="@id/login_textView"
+        android:layout_alignEnd="@id/login_textView"
         android:layout_alignStart="@id/login_textView"
-        android:layout_alignEnd="@id/login_textView" />
+        android:layout_below="@id/login_textView"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/edittextbackground"
+        android:hint="User ID"
+        android:inputType="text"
+        android:textAlignment="center" />
 
     <EditText
         android:id="@+id/password"
@@ -76,6 +76,15 @@
         android:layout_centerHorizontal="true"
         />
 
+    <Button
+        android:id="@+id/button_settings"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:text="Settings"
+        android:layout_below="@id/button_sign_up"
+        android:layout_marginTop="25dp"
+        android:layout_centerHorizontal="true"
+        />
 
 </RelativeLayout>
 

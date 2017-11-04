@@ -27,7 +27,13 @@
         <activity
             android:name=".LoginActivity"
             android:label="@string/app_name"
-            android:noHistory="true"></activity>
+
+            android:noHistory="true">
+
+        </activity>
+
+
+
         <activity
             android:name=".feed_desc"
             android:label="@string/title_activity_feed_desc"
@@ -68,6 +74,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".ChangePasswordActivity"></activity>
     </application>
 
 </manifest>

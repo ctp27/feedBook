@@ -1,6 +1,6 @@
 <resources>
 
-    // Login Page
+    <!-- Login Page -->
     <string name="app_name">Feedly</string>
     <string name="email_id">Email-ID</string>
     <string name="password">password</string>
@@ -10,11 +10,23 @@
     <string name="login_to_feedly_message">Login to Feedly</string>
     <string name="button_forgot_password">Forgot Password ?</string>
 
-    // SignUp Page
+    <!-- SignUp Page -->
     <string name="sign_up_to_feedly_message">Sign Up To Feedly</string>
     <string name="full_name">Full name</string>
     <string name="button_create_account">Create My Account</string>
     <string name="title_activity_settings">Settings</string>
+
+    <!-- Change Password Page -->
+    <string name="back_to_login">back</string>
+    <string name="tv_old_password">Old Password</string>
+    <string name="tv_new_password">New Password</string>
+    <string name="tv_confirm_password">Confirm Password</string>
+    <string name="b_update_password">Update Password</string>
+
+    <!-- Settings Page -->
+    <string name="tv_theme">Theme</string>
+    <string name="tv_default_view">Default View</string>
+    <string name="tv_change_password">Change Password</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>

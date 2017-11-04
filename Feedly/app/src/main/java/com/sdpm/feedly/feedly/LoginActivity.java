@@ -9,8 +9,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 public class LoginActivity extends AppCompatActivity {
 
+    DatabaseReference database;
+    Boolean isValidUser = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -18,40 +26,49 @@ public class LoginActivity extends AppCompatActivity {
 
 
         // Initialising Fields & Buttons
-        final EditText et_email = (EditText) findViewById(R.id.email_id);
+        final EditText et_emailId = (EditText) findViewById(R.id.email_id);
         final EditText et_password = (EditText) findViewById(R.id.password);
         final Button b_login = (Button) findViewById(R.id.button_login);
         final Button b_sign_up = (Button) findViewById(R.id.button_sign_up);
+        final Button b_settings = (Button) findViewById(R.id.button_settings);
 
-        // Dummy Data for login
-        final String dummy_user="feedly";
-        final String dummy_pass="feedly";
-
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        database = FirebaseDatabase.getInstance().getReference();
 
         // Login Button
         b_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                final String email = et_email.getText().toString();
+                final String emailId = et_emailId.getText().toString();
                 final String password = et_password.getText().toString();
-                Log.d("tag",email);
+                Log.d("tag",emailId);
                 Log.d("tag",password);
 
-                // Login Authentication
-                if(email.equals(dummy_user) && password.equals(dummy_pass)){
+                isValidUser = false;
+                database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.child("email_id").getValue().toString().equalsIgnoreCase(emailId) && snapshot.child("password").getValue().toString().equalsIgnoreCase(password)){
+                                isValidUser = true;
+                                break;
+                            }
+                        }
+                        if(isValidUser){
+                                Intent intent = new Intent(LoginActivity.this, HomeNav.class);
+                                startActivity(intent);
+                        }else {
+                            Toast.makeText(getApplicationContext(),"Invalid User Id or Password",Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-                    Toast.makeText(getApplicationContext(),"Login Successful",Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(LoginActivity.this, HomeNav.class);
-                    startActivity(intent);
-
-                }
-
-                else{
-                    Toast.makeText(getApplicationContext(),"Invalid Login",Toast.LENGTH_SHORT).show();
-                }
-
+                    @Override
+                    public void onCancelled(DatabaseError d){
+                        Log.d("Login DbError Msg ->",d.getMessage());
+                        Log.d("Login DbError Detail ->",d.getDetails());
+                    }
+                });
             }
         });
 
@@ -61,6 +78,18 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
+        // Testing Settings Button
+
+        b_settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(LoginActivity.this, SettingsActivity.class);
                 startActivity(intent);
 
             }
