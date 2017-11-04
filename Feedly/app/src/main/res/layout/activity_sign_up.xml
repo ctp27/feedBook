@@ -32,24 +32,25 @@
         android:layout_alignEnd="@id/sign_up_message" />
 
     <EditText
-        android:id="@id/email_id"
-        android:inputType="textEmailAddress"
+        android:id="@+id/email_id"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:hint="@string/email_id"
-        android:textAlignment="center"
-        android:background="@drawable/edittextbackground"
-        android:layout_marginTop="0.60dp"
-        android:layout_below="@+id/full_name"
+        android:layout_alignEnd="@+id/full_name"
         android:layout_alignStart="@+id/full_name"
-        android:layout_alignEnd="@+id/full_name" />
+        android:layout_below="@+id/full_name"
+        android:layout_marginTop="0.60dp"
+        android:background="@drawable/edittextbackground"
+        android:hint="Enter Email ID"
+        android:inputType="text"
+        android:textAlignment="center" />
+
 
     <EditText
         android:id="@id/password"
         android:inputType="textPassword"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:hint="@string/password"
+        android:hint="Create Password"
         android:textAlignment="center"
         android:background="@drawable/edittextbackground"
         android:layout_below="@+id/email_id"
