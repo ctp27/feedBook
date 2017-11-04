@@ -27,7 +27,7 @@
         android:layout_below="@id/login_textView"
         android:layout_marginTop="20dp"
         android:background="@drawable/edittextbackground"
-        android:hint="User ID"
+        android:hint="Email ID"
         android:inputType="text"
         android:textAlignment="center" />
 

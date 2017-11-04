@@ -1,6 +1,7 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,31 +45,39 @@ public class LoginActivity extends AppCompatActivity {
                 final String password = et_password.getText().toString();
                 Log.d("tag",emailId);
                 Log.d("tag",password);
-
-                isValidUser = false;
-                database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            if(snapshot.child("email_id").getValue().toString().equalsIgnoreCase(emailId) && snapshot.child("password").getValue().toString().equalsIgnoreCase(password)){
-                                isValidUser = true;
-                                break;
+                if(emailId.equalsIgnoreCase("") || password.equals("")){
+                    Toast.makeText(getApplicationContext(),"Enter Valid Email Id and Password",Toast.LENGTH_SHORT).show();
+                } else {
+                    isValidUser = false;
+                    database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if (snapshot.child("email_id").getValue().toString().equals(emailId) && snapshot.child("password").getValue().toString().equals(password)) {
+                                    isValidUser = true;
+                                    break;
+                                }
                             }
-                        }
-                        if(isValidUser){
+                            if (isValidUser) {
+                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+                                SharedPreferences.Editor edit = userDetails.edit();
+                                edit.clear();
+                                edit.putString("email",emailId);
+                                edit.commit();
                                 Intent intent = new Intent(LoginActivity.this, HomeNav.class);
                                 startActivity(intent);
-                        }else {
-                            Toast.makeText(getApplicationContext(),"Invalid User Id or Password",Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Invalid Email Id or Password", Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onCancelled(DatabaseError d){
-                        Log.d("Login DbError Msg ->",d.getMessage());
-                        Log.d("Login DbError Detail ->",d.getDetails());
-                    }
-                });
+                        @Override
+                        public void onCancelled(DatabaseError d) {
+                            Log.d("Login DbError Msg ->", d.getMessage());
+                            Log.d("Login DbError Detail ->", d.getDetails());
+                        }
+                    });
+                }
             }
         });
 
