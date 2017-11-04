@@ -74,7 +74,8 @@
                 android:background="@drawable/side_nav_button"
                 android:text="LOGIN"
                 android:textColor="@android:color/darker_gray"
-                android:layout_marginBottom="10dp"/>
+                android:layout_marginBottom="10dp"
+                android:onClick="openLoginView"/>
 
             <TextView
                 android:layout_width="match_parent"
