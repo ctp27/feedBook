@@ -27,6 +27,7 @@ public class SignUpActivity extends AppCompatActivity {
         final EditText et_email_id = (EditText) findViewById(R.id.email_id);
         final EditText et_password = (EditText) findViewById(R.id.password);
         final Button button_register = (Button) findViewById(R.id.button_register);
+        final Button button_back_to_login = (Button) findViewById(R.id.button_back_to_login);
 
         // Registration Button
         button_register.setOnClickListener(new View.OnClickListener() {
@@ -96,6 +97,17 @@ public class SignUpActivity extends AppCompatActivity {
 
             }
         });
+
+        button_back_to_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
     }
 }
 

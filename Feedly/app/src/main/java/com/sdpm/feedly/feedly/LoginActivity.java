@@ -22,6 +22,7 @@ public class LoginActivity extends AppCompatActivity {
         final EditText et_password = (EditText) findViewById(R.id.password);
         final Button b_login = (Button) findViewById(R.id.button_login);
         final Button b_sign_up = (Button) findViewById(R.id.button_sign_up);
+        final Button b_settings = (Button) findViewById(R.id.button_settings);
 
         // Dummy Data for login
         final String dummy_user="feedly";
@@ -61,6 +62,18 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
+        // Testing Settings Button
+
+        b_settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(LoginActivity.this, SettingsActivity.class);
                 startActivity(intent);
 
             }
