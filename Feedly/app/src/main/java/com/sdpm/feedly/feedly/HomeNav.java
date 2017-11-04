@@ -61,7 +61,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         /**
          * TODO: action should be assigned based on the usersettings
          */
-        
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
@@ -77,7 +77,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         mViewPager.setOffscreenPageLimit(limit);
 
         if(theFeeds != null) {
-            getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+            getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
         }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
@@ -120,7 +120,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     @Override
     public void onPageSelected(int position) {
         if(theFeeds!=null && position < theFeeds.size()) {
-            getSupportActionBar().setTitle(theFeeds.get(position).getCategory());
+            String category = theFeeds.get(position).getCategory();
+            String feedName = theFeeds.get(position).getName();
+            getSupportActionBar().setTitle(category+"/"+feedName);
         }
     }
 

@@ -7,14 +7,15 @@ import android.support.v7.app.AppCompatActivity;
 public class LandingPageActivity extends AppCompatActivity {
 
     public static final String token = "Logged";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing_page);
 
-
         /**
-         * Check if file exisis in memory.
+         *
+         * Check if file exists in memory.
          * If yes, login and redirect to homepage
          * If not, redirect to login page
          */
@@ -27,8 +28,6 @@ public class LandingPageActivity extends AppCompatActivity {
         }
 
             startActivity(intent);
-
-
 
     }
 }
