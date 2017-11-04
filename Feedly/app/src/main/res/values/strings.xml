@@ -145,4 +145,10 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string-array name="default_nav_array">
+        <item>Today</item>
+        <item>Read Later</item>
+        <item>Explore</item>
+    </string-array>
 </resources>
