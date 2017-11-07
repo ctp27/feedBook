@@ -20,72 +20,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true" >
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="50dp"
-            android:paddingBottom="20dp"
-            android:paddingRight="15dp"
-            android:paddingLeft="15dp"
-            android:background="@android:color/white">
-            <LinearLayout
-                android:id="@+id/lin_con_view"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Your Feedly"
-                    android:textSize="32dp"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="20dp" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Organize your favorite sources, blogs, and keyword alerts into easy-to-read feeds."
-                    android:textColor="@android:color/darker_gray"
-                    android:layout_marginBottom="20dp"/>
-
-                <Button
-                    android:id="@+id/search_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/side_nav_button"
-                    android:text="ADD YOUR FIRST SOURCE"
-                    android:textColor="@android:color/darker_gray"
-                    android:layout_marginBottom="10dp"/>
-
-                <Button
-                    android:id="@+id/explore_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/side_nav_button"
-                    android:text="EXPLORE"
-                    android:textColor="@android:color/darker_gray" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/login_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:background="@drawable/side_nav_button"
-                android:text="LOGIN"
-                android:textColor="@android:color/darker_gray"
-                android:layout_marginBottom="10dp"
-                android:onClick="openLoginView"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Existing User?"
-                android:layout_above="@id/login_button"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="10dp"/>
-
-        </RelativeLayout>
     </android.support.design.widget.NavigationView>
 
 </android.support.v4.widget.DrawerLayout>

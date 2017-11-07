@@ -3,6 +3,7 @@ package com.sdpm.feedly.feedly;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,6 +20,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.sdpm.feedly.utils.DownloadXml;
 
@@ -59,9 +62,21 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_no_login_side_nav);
 
+        setContentView(R.layout.activity_no_login_side_nav);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
+        NavigationView navView = (NavigationView) drawer.findViewById(R.id.nav_view);
+
+        LinearLayout layout;
+        if (true) { // user logged in
+            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
+        }
+        else {
+            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.no_login_layout_nav, null);
+        }
+        navView.addView(layout);
+
+
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
