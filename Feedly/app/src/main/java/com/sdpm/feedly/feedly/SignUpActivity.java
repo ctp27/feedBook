@@ -3,6 +3,7 @@ package com.sdpm.feedly.feedly;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -105,7 +106,7 @@ public class SignUpActivity extends AppCompatActivity {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                if(snapshot.child("email_id").getValue().toString().equalsIgnoreCase(email)){
+                                if(snapshot.child("email_id").getValue().toString().equals(email)){
                                     existingUser = true;
                                     break;
                                 }
@@ -118,6 +119,11 @@ public class SignUpActivity extends AppCompatActivity {
                                 m.put("email_id",email);
                                 m.put("password", password);
                                 database.child("Users").push().setValue(m);
+                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+                                SharedPreferences.Editor edit = userDetails.edit();
+                                edit.clear();
+                                edit.putString("email",email);
+                                edit.commit();
                                 Intent intent = new Intent(SignUpActivity.this, HomeNav.class);
                                 startActivity(intent);
                             }
