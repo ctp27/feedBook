@@ -143,16 +143,60 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         removeFeedsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ArrayList<Feed> feedsToDelete = CheckboxExpandableListAdapter.getFeedsToDelete();
+                final ArrayList<Feed> feedsToDelete = CheckboxExpandableListAdapter.getFeedsToDelete();
+                database.child("PersonalFeeds").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        boolean hasPersonalFeeds = false;
+                        DatabaseReference dbSnap = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.hasChild(email.split("@")[0])){
+                                dataSnapshot = snapshot.child(email.split("@")[0]);
+                                hasPersonalFeeds = true;
+                                dbSnap = database.child("PersonalFeeds").child(snapshot.getKey()).child(email.split("@")[0]);
+                                break;
+                            }
+                        }
+                        if(hasPersonalFeeds && dbSnap != null) {
+                            boolean deletedSuccessfully = false;
+                            for(Feed f : feedsToDelete){
+                                if(dataSnapshot.hasChild(f.getCategory())){
+                                    DataSnapshot subSnapShot = dataSnapshot.child(f.getCategory());
+                                    for(DataSnapshot s : subSnapShot.getChildren()) {
+                                        if (s.child("name").getValue().toString().equals(f.getName())) {
+                                            dbSnap.child(subSnapShot.getKey()).child(s.getKey()).removeValue();
+                                            for(Feed f1 : personalFeedsUnderCategory.get(f.getCategory())){
+                                                if(f1.getName().equals(f.getName())) {
+                                                    personalFeedsUnderCategory.get(f.getCategory()).remove(f1);
+                                                    if(personalFeedsUnderCategory.get(f.getCategory()).size() == 0){
+                                                        personalFeedsUnderCategory.remove(f.getCategory());
+                                                        personalCategoriesList.remove(f.getCategory());
+                                                    }
+                                                    deletedSuccessfully = true;
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if(deletedSuccessfully) {
+                                checkboxExpandableListAdapter.resetViewAfterDelete();
+                                expListAdapter.notifyDataSetChanged();
+                                checkboxExpandableListAdapter.notifyDataSetChanged();
+                            }
+                        }
+                    }
 
-                for(Feed f : feedsToDelete){
-//                  TODO: Logic to delete feeds from database
-                    Log.d(TAG,f.getName());
-                }
-//
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Login DbError Msg ->", d.getMessage());
+                        Log.d("Login DbError Detail ->", d.getDetails());
+                    }
+                });
             }
         });
-
     }
 
 
@@ -212,7 +256,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 theFeeds.add(personalFeedsUnderCategory.get(personalCategoriesList.get(groupPosition).toString()).get(childPosition));
                 if(theFeeds != null) {
                     mSectionsPagerAdapter.notifyDataSetChanged();
-                    getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                    String category = theFeeds.get(0).getCategory();
+                    String feedName = theFeeds.get(0).getName();
+                    getSupportActionBar().setTitle(category+"/"+feedName);
                 }
                 return false;
             }

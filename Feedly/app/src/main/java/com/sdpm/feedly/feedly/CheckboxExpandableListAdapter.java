@@ -72,7 +72,9 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
         feedImg = (ImageView) convertView.findViewById(R.id.edit_feed_photo);
         feedTitle = (TextView) convertView.findViewById(R.id.edit_feed_title);
         theCheckbox = (CheckBox) convertView.findViewById(R.id.edit_feed_checkbox);
-
+        if(feedsToDelete.size() == 0) {
+          //  theCheckbox.setChecked(false);
+        }
         feedTitle.setText(childFeed.getName());
         feedImg.setImageResource(R.drawable.feed);
 
@@ -85,7 +87,6 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
                     counter++;
                     removeBtn.setText("Remove ("+counter+")");
                     removeBtn.setEnabled(true);
-
                 }
                 else{
                     if(feedsToDelete.contains(childFeed)){
@@ -96,6 +97,8 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
                                 if(counter==0){
                                     removeBtn.setText("Remove");
                                     removeBtn.setEnabled(false);
+                                } else {
+                                    removeBtn.setText("Remove ("+counter+")");
                                 }
 
                                 break;
@@ -162,6 +165,13 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
 
     public static ArrayList<Feed> getFeedsToDelete() {
         return feedsToDelete;
+    }
+
+    public void resetViewAfterDelete(){
+        feedsToDelete = new ArrayList<>();
+        counter = 0;
+        removeBtn.setText("Remove");
+        removeBtn.setEnabled(false);
     }
 
 }
