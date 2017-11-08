@@ -1,12 +1,15 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,15 +17,29 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ExpandableListView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.sdpm.feedly.utils.DownloadXml;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import model.Article;
 import model.Feed;
@@ -43,34 +60,40 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    DatabaseReference database;
     private ArrayList<Feed> theFeeds;
-
-
-    {
-        theFeeds= new ArrayList<>();
-        theFeeds.add(new Feed("The Daily Notebook","Film","","https://mubi.com/notebook/posts.atom",new ArrayList<Article>()));
-        theFeeds.add(new Feed("Entertainment Weekly","Film","","http://ew.com/feed/",new ArrayList<Article>()));
-        theFeeds.add(new Feed("FirstShowing","Film",""," http://www.firstshowing.net/feed/?full",new ArrayList<Article>()));
-        theFeeds.add(new Feed("IGN","Gaming","","http://feeds.ign.com/ign/articles?format=xml",new ArrayList<Article>()));
-        theFeeds.add(new Feed("Food52","Food","","https://food52.com/blog.rss",new ArrayList<Article>()));
-        theFeeds.add(new Feed("Scientific American","Science","","http://rss.sciam.com/ScientificAmerican-Global?fmt=xml",new ArrayList<Article>()));
-        theFeeds.add(new Feed("Eurogamer","Gaming","","http://www.eurogamer.net/?format=rss",new ArrayList<Article>()));
-
-
-    }
+    private ArrayList<Feed> exploreFeeds;
+    String email = "";
+    ExpandableListAdapter expListAdapter;
+    ExpandableListView expListView;
+    List<String> personalCategoriesList;
+    HashMap<String, List<Feed>> personalFeedsUnderCategory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_no_login_side_nav);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
+        setContentView(R.layout.activity_no_login_side_nav);
+        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
+        NavigationView navView = (NavigationView) drawer.findViewById(R.id.nav_view);
+
+        LinearLayout layout;
+
+        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        email = userDetails.getString("email", "");
+        if (email.equals("")) { // user not logged in
+            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.activity_no_login_side_nav, null);
+        }
+        else {
+            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
+        }
+        navView.addView(layout);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         //   drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
@@ -80,11 +103,86 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
          */
 
 
+        ListView lv = (ListView) findViewById(R.id.default_nav_list);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position){
+                    case 0: //today
+                    case 1: //read later
+                    case 2: //explore
+                        theFeeds = exploreFeeds;
+                        if(theFeeds != null) {
+                            mSectionsPagerAdapter.notifyDataSetChanged();
+                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                        }
+                }
+            }
+        });
+
+        expListView = (ExpandableListView) findViewById(R.id.personal_feeds_expandable_lv);
+
+        expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v,
+                                        int groupPosition, int childPosition, long id) {
+                theFeeds = new ArrayList<Feed>();
+                theFeeds.add(personalFeedsUnderCategory.get(personalCategoriesList.get(groupPosition).toString()).get(childPosition));
+                if(theFeeds != null) {
+                    mSectionsPagerAdapter.notifyDataSetChanged();
+                    getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                }
+                return false;
+            }
+        });
+
+        database = FirebaseDatabase.getInstance().getReference();
+        prepareData();
 
 
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+    }
+
+    public void  prepareData(){
+        exploreFeeds = new ArrayList<>();
+        database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    for(DataSnapshot subSnapShot : snapshot.getChildren()){
+                        exploreFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),snapshot.getKey().toString(),"",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
+                    }
+                }
+                if(exploreFeeds != null) {
+                    theFeeds = exploreFeeds;
+                    LoadDataOnScreen();
+                    if(!email.equals("")) {
+                        createExpandableListOfPersonalFeeds();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+    }
+
+    public void LoadDataOnScreen(){
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),theFeeds);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -98,16 +196,48 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
         }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
     }
 
+    public void createExpandableListOfPersonalFeeds(){
+        personalCategoriesList = new ArrayList<>();
+        personalFeedsUnderCategory = new HashMap<String,List<Feed>>();
+        database.child("PersonalFeeds").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean hasPersonalFeeds = false;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        hasPersonalFeeds = true;
+                        break;
+                    }
+                }
+                if(hasPersonalFeeds) {
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        personalCategoriesList.add(snapshot.getKey().toString());
+                        List<Feed> feedList = new ArrayList<Feed>();
+                        for (DataSnapshot subSnapShot : snapshot.getChildren()) {
+                            feedList.add(new Feed(subSnapShot.child("name").getValue().toString(), snapshot.getKey().toString(), "", subSnapShot.child("rssLink").getValue().toString(), new ArrayList<Article>()));
+                        }
+                        personalFeedsUnderCategory.put(snapshot.getKey().toString(), feedList);
+                    }
+
+                    if (personalCategoriesList.size() != 0 && personalFeedsUnderCategory.size() != 0) {
+                        expListAdapter = new ExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory);
+                        expListView.setAdapter(expListAdapter);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+
+
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -209,12 +339,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter{
 
-        ArrayList<Feed> theFeeds;
-        public SectionsPagerAdapter(FragmentManager fm, ArrayList<Feed> theFeeds) {
+        public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
-            this.theFeeds = theFeeds;
         }
 
         @Override
@@ -227,6 +355,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             return PlaceholderFragment.newInstance(null);
         }
 
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
+        }
         @Override
         public int getCount() {
             // Show n total pages.
