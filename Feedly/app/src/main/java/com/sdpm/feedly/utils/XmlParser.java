@@ -1,5 +1,7 @@
 package com.sdpm.feedly.utils;
 
+import android.util.Log;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
@@ -178,6 +180,13 @@ public class XmlParser {
                 String tempDesc = article.getDescription();
                 if (HtmlParseUtils.containsHtml(tempDesc)) {
                     theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
+                    if(theUrl==null && article.getContent()!=null){
+                        Log.d(TAG,"Article content is not null");
+                        if(HtmlParseUtils.containsHtml(article.getContent())){
+                            Log.d(TAG,"Article contains HTML");
+                            theUrl = HtmlParseUtils.getImageUrlFromDescription(article.getContent());
+                        }
+                    }
                     setTheUrl(theUrl,article);
                 }
             }else {
@@ -195,7 +204,7 @@ public class XmlParser {
      */
 
     private void setTheUrl(String theUrl, Article a) {
-        if (!theUrl.isEmpty()) {
+        if (theUrl!=null && !theUrl.isEmpty()) {
             if (HtmlParseUtils.isValidUrl(theUrl)) {
                 a.setThumbnailLink(theUrl);
             } else {

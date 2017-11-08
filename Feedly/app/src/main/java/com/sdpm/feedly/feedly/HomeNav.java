@@ -49,10 +49,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     {
         theFeeds= new ArrayList<>();
         theFeeds.add(new Feed("The Daily Notebook","Film","","https://mubi.com/notebook/posts.atom",new ArrayList<Article>()));
+        theFeeds.add(new Feed("Entertainment Weekly","Film","","http://ew.com/feed/",new ArrayList<Article>()));
+        theFeeds.add(new Feed("FirstShowing","Film",""," http://www.firstshowing.net/feed/?full",new ArrayList<Article>()));
         theFeeds.add(new Feed("IGN","Gaming","","http://feeds.ign.com/ign/articles?format=xml",new ArrayList<Article>()));
         theFeeds.add(new Feed("Food52","Food","","https://food52.com/blog.rss",new ArrayList<Article>()));
         theFeeds.add(new Feed("Scientific American","Science","","http://rss.sciam.com/ScientificAmerican-Global?fmt=xml",new ArrayList<Article>()));
         theFeeds.add(new Feed("Eurogamer","Gaming","","http://www.eurogamer.net/?format=rss",new ArrayList<Article>()));
+
 
     }
 
