@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
                 final String password = et_password.getText().toString();
                 Log.d("tag",emailId);
                 Log.d("tag",password);
-                if(emailId.equalsIgnoreCase("") || password.equals("")){
+                if(emailId.equals("") || password.equals("")){
                     Toast.makeText(getApplicationContext(),"Enter Valid Email Id and Password",Toast.LENGTH_SHORT).show();
                 } else {
                     isValidUser = false;

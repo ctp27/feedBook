@@ -11,8 +11,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/default_nav_list"
         android:entries="@array/default_nav_array"
-        android:background="@android:color/white"
-        />
+        android:background="@android:color/white"/>
 
     <TextView
         android:layout_width="match_parent"
@@ -24,12 +23,10 @@
         android:text="PERSONAL FEEDS"
         android:textColor="@android:color/darker_gray"/>
 
-    <ListView
+    <ExpandableListView
+        android:id="@+id/personal_feeds_expandable_lv"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/personal_feed_list"
-        android:background="@android:color/white"
-        />
+        android:layout_height="match_parent" />
 
     <TextView
         android:layout_width="match_parent"
@@ -71,5 +68,6 @@
         android:text="LOGOUT"
         android:textColor="@android:color/darker_gray"
         android:layout_marginBottom="10dp"/>
+
 </LinearLayout>
 
