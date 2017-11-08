@@ -6,68 +6,102 @@
     android:orientation="vertical"
     android:background="#D3D3D3">
 
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/default_nav_list"
-        android:entries="@array/default_nav_array"
-        android:background="@android:color/white"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:layout_marginLeft="15dp"
-        android:layout_margin="15dp"
-        android:layout_marginTop="30dp"
-        android:text="PERSONAL FEEDS"
-        android:textColor="@android:color/darker_gray"/>
-
-    <ExpandableListView
-        android:id="@+id/personal_feeds_expandable_lv"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:layout_marginLeft="15dp"
-        android:layout_margin="15dp"
-        android:layout_marginTop="30dp"
-        android:visibility="gone"
-        android:text="PERSONAL BOARDS"
-        android:textColor="@android:color/darker_gray"/>
-
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/personal_board_list"
-        android:background="@android:color/white"
-        />
 
 
-    <Button
-        android:id="@+id/search_button"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:layout_marginLeft="15dp"
-        android:background="@drawable/side_nav_button"
-        android:text="ADD CONTENT"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginBottom="10dp"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/nav_drawer_view"
+        android:visibility="visible">
 
-    <Button
-        android:id="@+id/logout_button"
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/default_nav_list"
+            android:entries="@array/default_nav_array"
+            android:background="@android:color/white"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:layout_marginLeft="15dp"
+            android:layout_margin="15dp"
+            android:layout_marginTop="30dp"
+            android:text="PERSONAL FEEDS"
+            android:textColor="@android:color/darker_gray"/>
+
+        <ExpandableListView
+            android:id="@+id/personal_feeds_expandable_lv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+
+        <Button
+            android:id="@+id/edit_content_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:background="@drawable/side_nav_button"
+            android:text="Edit Content"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="10dp"/>
+
+        <Button
+            android:id="@+id/logout_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:background="@drawable/side_nav_button"
+            android:text="LOGOUT"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="10dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:layout_marginLeft="15dp"
-        android:background="@drawable/side_nav_button"
-        android:text="LOGOUT"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginBottom="10dp"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/edit_content_view"
+        android:visibility="invisible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:orientation="horizontal"
+            >
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remove"
+                android:id="@+id/remove_feed_btn"
+                android:textSize="15sp"
+                android:enabled="false"
+                android:layout_margin="20dp"
+                />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:textSize="15sp"
+                android:id="@+id/edit_cancel_btn"
+                android:text="Cancel"/>
+
+        </LinearLayout>
+
+        <ExpandableListView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/editcontent_expandable"
+            />
+
+    </LinearLayout>
+
 
 </LinearLayout>
 

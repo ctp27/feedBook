@@ -1,34 +1,44 @@
 package com.sdpm.feedly.feedly;
 
-/**
- * Created by Junaid on 11/7/2017.
- */
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import model.Feed;
 
-public class ExpandableListAdapter extends BaseExpandableListAdapter {
+/**
+ * Created by clinton on 11/8/17.
+ */
+
+public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
 
     private Context _context;
     private List<String> categoriesList; // header titles
     // child data in format of header title, child title
     private HashMap<String, List<Feed>> feedsListUnderCategory;
+    private static ArrayList<Feed> feedsToDelete;
+    private int counter;
+    Button removeBtn;
 
-    public ExpandableListAdapter(Context context, List<String> categoriesList,
-                                 HashMap<String, List<Feed>> feedsListUnderCategory) {
+    public CheckboxExpandableListAdapter(Context context, List<String> categoriesList,
+                                 HashMap<String, List<Feed>> feedsListUnderCategory, Button removeBtn) {
         this._context = context;
         this.categoriesList = categoriesList;
         this.feedsListUnderCategory = feedsListUnderCategory;
+        feedsToDelete = new ArrayList<>();
+        counter = 0;
+        this.removeBtn = removeBtn;
     }
 
     @Override
@@ -52,18 +62,53 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this._context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = infalInflater.inflate(R.layout.personal_feed_lv_subrow, null);
+            convertView = infalInflater.inflate(R.layout.editable_feed_subrow, null);
         }
 
         ImageView feedImg;
+        CheckBox theCheckbox;
+        final TextView feedTitle;
 
-        TextView feedTitle;
-
-        feedImg = (ImageView) convertView.findViewById(R.id.elv_feed_photo);
-        feedTitle = (TextView) convertView.findViewById(R.id.elv_feed_title);
+        feedImg = (ImageView) convertView.findViewById(R.id.edit_feed_photo);
+        feedTitle = (TextView) convertView.findViewById(R.id.edit_feed_title);
+        theCheckbox = (CheckBox) convertView.findViewById(R.id.edit_feed_checkbox);
 
         feedTitle.setText(childFeed.getName());
         feedImg.setImageResource(R.drawable.feed);
+
+        theCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if(isChecked){
+                    feedsToDelete.add(childFeed);
+                    counter++;
+                    removeBtn.setText("Remove ("+counter+")");
+                    removeBtn.setEnabled(true);
+
+                }
+                else{
+                    if(feedsToDelete.contains(childFeed)){
+                        for(int i=0;i<feedsToDelete.size();i++){
+                            if(feedsToDelete.get(i).getName() == childFeed.getName()){
+                                feedsToDelete.remove(i);
+                                counter--;
+                                if(counter==0){
+                                    removeBtn.setText("Remove");
+                                    removeBtn.setEnabled(false);
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
+            }
+        });
+
+
+
         return convertView;
     }
 
@@ -99,7 +144,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         }
 
         TextView categoryHeader = (TextView) convertView.findViewById(R.id.category_name);
-      //  categoryHeader.setTypeface(null, Typeface.BOLD);
+        //  categoryHeader.setTypeface(null, Typeface.BOLD);
         categoryHeader.setText(categoryTitle);
 
         return convertView;
@@ -114,4 +159,9 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return true;
     }
+
+    public static ArrayList<Feed> getFeedsToDelete() {
+        return feedsToDelete;
+    }
+
 }

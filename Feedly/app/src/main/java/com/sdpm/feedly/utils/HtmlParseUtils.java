@@ -56,8 +56,7 @@ public class HtmlParseUtils {
     public static String getImageUrlFromDescription(String theDescription){
 
         String url=null;
-
-        if(containsHtml(theDescription) && theDescription!=null) {
+        if(theDescription!=null && containsHtml(theDescription)) {
             Document theDoc = Jsoup.parse(theDescription);
             Elements images = theDoc.getElementsByTag("img");
 

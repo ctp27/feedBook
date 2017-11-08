@@ -24,10 +24,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -60,22 +61,108 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
     DatabaseReference database;
     private ArrayList<Feed> theFeeds;
     private ArrayList<Feed> exploreFeeds;
     String email = "";
     ExpandableListAdapter expListAdapter;
+    CheckboxExpandableListAdapter checkboxExpandableListAdapter;
     ExpandableListView expListView;
+    ExpandableListView editFeedsExpListView;
     List<String> personalCategoriesList;
     HashMap<String, List<Feed>> personalFeedsUnderCategory;
+    private DrawerLayout drawer;
+    private  NavigationView navView;
+
+    private Button editFeedContentBtn;
+    private Button editCancelBtn;
+    private Button removeFeedsBtn;
+    private Toolbar toolbar;
+
+    private LinearLayout navDrawerLayout;
+    private LinearLayout editContentLayout;
+
+    private static final String TAG = "HomeNav";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_no_login_side_nav);
-        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
-        NavigationView navView = (NavigationView) drawer.findViewById(R.id.nav_view);
+         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        /* Sets the Navigation drawer based on logged in state */
+        setTheNavDrawer();
+        /**
+         * TODO: action should be assigned based on the usersettings
+         */
+        database = FirebaseDatabase.getInstance().getReference();
+        prepareData();
+
+        /* Initializes all widgets */
+        initializeObjects();
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+    }
+
+    private void initializeObjects(){
+
+        navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
+        editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
+
+        removeFeedsBtn = (Button) findViewById(R.id.remove_feed_btn);
+        editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
+
+
+        editFeedContentBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTheEditContentDrawer();
+            }
+        });
+
+
+
+        editCancelBtn = (Button) findViewById(R.id.edit_cancel_btn);
+        editCancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideTheEditContentDrawer();
+            }
+        });
+
+        removeFeedsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ArrayList<Feed> feedsToDelete = CheckboxExpandableListAdapter.getFeedsToDelete();
+
+                for(Feed f : feedsToDelete){
+//                  TODO: Logic to delete feeds from database
+                    Log.d(TAG,f.getName());
+                }
+//
+            }
+        });
+
+    }
+
+
+    /**
+     * Initializes and sets the Navigation drawer components
+     *
+     */
+    private void setTheNavDrawer(){
+        drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
+        navView = (NavigationView) drawer.findViewById(R.id.nav_view);
 
         LinearLayout layout;
 
@@ -89,18 +176,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
         navView.addView(layout);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         //   drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
-        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-
-        /**
-         * TODO: action should be assigned based on the usersettings
-         */
 
 
         ListView lv = (ListView) findViewById(R.id.default_nav_list);
@@ -119,8 +200,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
             }
         });
-
         expListView = (ExpandableListView) findViewById(R.id.personal_feeds_expandable_lv);
+        editFeedsExpListView = (ExpandableListView) findViewById(R.id.editcontent_expandable);
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
 
@@ -137,20 +218,24 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
         });
 
-        database = FirebaseDatabase.getInstance().getReference();
-        prepareData();
 
-
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
-        fab.setOnClickListener(new View.OnClickListener() {
+        editFeedsExpListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                CheckedTextView ctv = (CheckedTextView)view;
+                if (ctv.isChecked()){
+                    Toast.makeText(getApplicationContext(),"uncheckd",Toast.LENGTH_LONG).show();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"checked",Toast.LENGTH_LONG).show();
+                }
+
             }
         });
+
     }
+
 
     public void  prepareData(){
         exploreFeeds = new ArrayList<>();
@@ -225,6 +310,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     if (personalCategoriesList.size() != 0 && personalFeedsUnderCategory.size() != 0) {
                         expListAdapter = new ExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory);
                         expListView.setAdapter(expListAdapter);
+
+                        /* Set the edit content adapter */
+                        checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
+                        editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
+                        Log.d("BLAH","Setting the adapter");
+
                     }
                 }
             }
@@ -375,6 +466,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
 
 
+    }
+
+
+
+    private void showTheEditContentDrawer(){
+        editContentLayout.setVisibility(View.VISIBLE);
+        navDrawerLayout.setVisibility(View.GONE);
+    }
+
+    private void hideTheEditContentDrawer(){
+        editContentLayout.setVisibility(View.GONE);
+        navDrawerLayout.setVisibility(View.VISIBLE);
     }
 
 
