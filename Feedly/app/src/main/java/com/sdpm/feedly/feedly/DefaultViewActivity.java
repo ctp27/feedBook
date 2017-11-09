@@ -21,8 +21,11 @@ public class DefaultViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_default_view);
 
+        RadioButton default_rb = (RadioButton) findViewById(R.id.rb_home);
+        int def_rb = default_rb.getId();
+
         SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
-        long rb_button = userDetails.getInt("default_view",0);
+        long rb_button = userDetails.getInt("default_view",def_rb);
 
         rg = (RadioGroup) findViewById(rgroup);
         rg.check((int) rb_button);
