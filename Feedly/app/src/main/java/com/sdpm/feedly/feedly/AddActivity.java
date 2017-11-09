@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
@@ -23,6 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.Article;
 import model.Feed;
@@ -47,6 +49,10 @@ public class AddActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
+
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
         database = FirebaseDatabase.getInstance().getReference();
         email = getIntent().getExtras().getString("email");
         getPersonalFeeds();
@@ -61,7 +67,20 @@ public class AddActivity extends AppCompatActivity {
 
 
     }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
+        //noinspection SimplifiableIfStatement
+       if(id == android.R.id.home){
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     private void getPersonalFeeds(){
         personalCategoriesList = new ArrayList<>();
@@ -124,7 +143,7 @@ public class AddActivity extends AppCompatActivity {
 //
                 }
                 AddSourceExpandableAdapter addSourceExpandableAdapter = new AddSourceExpandableAdapter(AddActivity.this, allCategoriesList, allFeedsUnderCategory);
-                        addFeedsView.setAdapter(addSourceExpandableAdapter);
+                addFeedsView.setAdapter(addSourceExpandableAdapter);
 //
             }
 
@@ -173,7 +192,7 @@ public class AddActivity extends AppCompatActivity {
                                  boolean isLastChild, View convertView, ViewGroup parent) {
 
             final Feed childFeed = (Feed) getChild(groupPosition, childPosition);
-
+            final String category = this.categoriesList.get(groupPosition);
             boolean isAdded = isAlreadyAdded(childFeed);
 
             if (convertView == null) {
@@ -202,18 +221,90 @@ public class AddActivity extends AppCompatActivity {
             imageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    updateTheDatabase(v,imageButton);
+                    updateTheDatabase(v,imageButton,childFeed,category);
                 }
             });
 
             return convertView;
         }
 
-        private void updateTheDatabase(View v, ImageButton btn) {
-//            TODO: Add code to add to database here
+        private void updateTheDatabase(View v, ImageButton btn, final Feed childfeed, final String category) {
+            database.child("PersonalFeeds").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(personalCategoriesList.size() == 0){ //first personal feed
+                        Map rssMap= new HashMap();
+                        rssMap.put("name",childfeed.getName());
+                        rssMap.put("rssLink",childfeed.getLink());
+
+                        Map uniqueRssKeyMap = new HashMap();
+                        uniqueRssKeyMap.put("1",rssMap);
+
+                        Map categoryMap = new HashMap();
+                        categoryMap.put(category,uniqueRssKeyMap);
+
+                        Map uniqueCategoryKeyMap = new HashMap();
+                        uniqueCategoryKeyMap.put("1",categoryMap);
+
+                        Map personalMap = new HashMap();
+                        personalMap.put(email.split("@")[0],uniqueCategoryKeyMap);
+
+
+                        database.child("PersonalFeeds").push().setValue(personalMap);
+                        personalCategoriesList.add(category);
+                        ArrayList<Feed> a = new ArrayList<>();
+                        a.add(childfeed);
+                        personalFeedsUnderCategory.put(category,a);
+                    }else { //add under existing category or make new category
+                        DatabaseReference dbSnapPersonal = null;
+                        DataSnapshot snapshotPersonal = null;
+                        Map rssMap= new HashMap();
+                        rssMap.put("name",childfeed.getName());
+                        rssMap.put("rssLink",childfeed.getLink());
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                           if(snapshot.hasChild(email.split("@")[0])){
+                               dbSnapPersonal = database.child("PersonalFeeds").child(snapshot.getKey()).child(email.split("@")[0]);
+                               snapshotPersonal = snapshot.child(email.split("@")[0]);
+                               break;
+                           }
+                        }
+                        if (dbSnapPersonal != null) {
+                            if (personalCategoriesList.contains(category)) { //add under existing category
+                                for(DataSnapshot snapshot : snapshotPersonal.getChildren()){
+                                    if(snapshot.hasChild(category)){
+                                        dbSnapPersonal.child(snapshot.getKey()).child(category).push().setValue(rssMap);
+                                        personalFeedsUnderCategory.get(category).add(childfeed);
+                                        break;
+                                    }
+                                }
+                            } else { //new category
+                                Map uniqueRssKeyMap = new HashMap();
+                                uniqueRssKeyMap.put("1",rssMap);
+
+                                Map categoryMap = new HashMap();
+                                categoryMap.put(category,uniqueRssKeyMap);
+
+                                dbSnapPersonal.push().setValue(categoryMap);
+                                personalCategoriesList.add(category);
+                                ArrayList<Feed> a = new ArrayList<>();
+                                a.add(childfeed);
+                                personalFeedsUnderCategory.put(category,a);
+                            }
+                        }
+
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d){
+                    Log.d("Login DbError Msg ->",d.getMessage());
+                    Log.d("Login DbError Detail ->",d.getDetails());
+                }
+            });
 
             /* TODO: Uncomment this method call once entry is added in database. Disables the button */
-//            disableTheButton(btn);
+
+            disableTheButton(btn);
 
         }
 
@@ -226,7 +317,6 @@ public class AddActivity extends AppCompatActivity {
             btn.setImageResource(R.drawable.ic_add_black_24dp);
             btn.setEnabled(true);
         }
-
         private boolean isAlreadyAdded(Feed childFeed) {
             boolean exists = false;
             for(String a : personalCategoriesList){
@@ -293,5 +383,4 @@ public class AddActivity extends AppCompatActivity {
 
 
     }
-
 }
