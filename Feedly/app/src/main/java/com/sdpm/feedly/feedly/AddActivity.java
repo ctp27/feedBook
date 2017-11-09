@@ -302,7 +302,7 @@ public class AddActivity extends AppCompatActivity {
                 }
             });
 
-            /* TODO: Uncomment this method call once entry is added in database. Disables the button */
+            /* : Uncomment this method call once entry is added in database. Disables the button */
 
             disableTheButton(btn);
 

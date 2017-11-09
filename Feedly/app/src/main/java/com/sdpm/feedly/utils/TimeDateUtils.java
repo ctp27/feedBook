@@ -22,9 +22,7 @@ public class TimeDateUtils {
         try {
             df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
             startDate = df.parse(theDate);
-
         } catch (ParseException e) {
-
             try{
                 df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 startDate = df.parse(theDate);
@@ -34,8 +32,7 @@ public class TimeDateUtils {
 
 
         }
-        String s = DateUtils.getRelativeDateTimeString(context,startDate.getTime(),DateUtils.HOUR_IN_MILLIS,DateUtils.DAY_IN_MILLIS,0).toString();
-
+        String s = DateUtils.getRelativeDateTimeString(context,startDate.getTime(),DateUtils.MINUTE_IN_MILLIS,DateUtils.DAY_IN_MILLIS,0).toString();
         return  s;
 
     }
