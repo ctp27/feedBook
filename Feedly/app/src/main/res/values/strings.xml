@@ -150,6 +150,7 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="add_your_first_source_to_get_personal_feeds">Add Your First Source to get personal feeds!</string>
 
     <string-array name="default_nav_array">
         <item>Today</item>
