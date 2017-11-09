@@ -30,6 +30,7 @@ import android.widget.CheckedTextView;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -82,11 +83,15 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button removeFeedsBtn;
     private Button addSourceBtn;
     private Toolbar toolbar;
+    private TextView todaysDefaultText;
 
     private LinearLayout navDrawerLayout;
     private LinearLayout editContentLayout;
 
     private static final String TAG = "HomeNav";
+    public static final String TODAYS_FEED = "Today";
+    public static final String EXPLORE_FEED= "Explore";
+    private static String defaultFeed;
     private boolean resumeFromSearch = false;
 
     @Override
@@ -97,13 +102,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        /**
+         * TODO: defaultFeed should be assigned based on the usersettings
+         */
+        defaultFeed = EXPLORE_FEED;
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
-        /**
-         * TODO: action should be assigned based on the usersettings
-         */
+
         database = FirebaseDatabase.getInstance().getReference();
+
         prepareData();
+
+
 
         /* Initializes all widgets */
         initializeObjects();
@@ -130,8 +140,29 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+    private void displayPersonalFeeds(){
+        List<String> thisList=null;
+        List<Feed> personalFeeds = new ArrayList<>();
+        if(personalCategoriesList!=null) {
+             thisList = personalCategoriesList;
+        }
+
+        for(String thisCategory : thisList){
+
+            List<Feed> theCategory=personalFeedsUnderCategory.get(thisCategory);
+            for(Feed f: theCategory){
+                personalFeeds.add(f);
+            }
+        }
+
+            theFeeds = (ArrayList<Feed>) personalFeeds;
+            LoadDataOnScreen();
+
+    }
+
     private void initializeObjects(){
 
+        todaysDefaultText = (TextView) findViewById(R.id.todays_default_text);
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
         editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
 
@@ -234,6 +265,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                 checkboxExpandableListAdapter.resetViewAfterDelete();
                                 expListAdapter.notifyDataSetChanged();
                                 checkboxExpandableListAdapter.notifyDataSetChanged();
+                                if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
+                                    displayPersonalFeeds();
+                                    defaultFeed = TODAYS_FEED;
+                                }
+                                else {
+                                    prepareData();
+                                    defaultFeed = EXPLORE_FEED;
+                                }
                             }
                         }
                     }
@@ -280,14 +319,23 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position){
-                    case 0: //today
-                    case 1: //read later
+                    case 0: displayPersonalFeeds();
+                            defaultFeed =TODAYS_FEED;
+                            break;
+                    case 1: Toast.makeText(HomeNav.this,"Coming soon!",Toast.LENGTH_LONG).show();
+                        break;
                     case 2: //explore
-                        theFeeds = exploreFeeds;
-                        if(theFeeds != null) {
-                            mSectionsPagerAdapter.notifyDataSetChanged();
-                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
+                        if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
+                            theFeeds = exploreFeeds;
+                            if (theFeeds != null) {
+                                mSectionsPagerAdapter.notifyDataSetChanged();
+                                getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
+                            }
+                        }else {
+                            defaultFeed = EXPLORE_FEED;
+                            prepareData();
                         }
+                        break;
                 }
             }
         });
@@ -365,7 +413,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
         mViewPager.setOffscreenPageLimit(limit);
 
-        if(theFeeds != null) {
+        if(theFeeds != null && !theFeeds.isEmpty()) {
             getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
         }
 
@@ -421,6 +469,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
                             editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
                         }
+                    }
+                    if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
+                        displayPersonalFeeds();
+                        defaultFeed =TODAYS_FEED;
                     }
                 }
             }
@@ -494,6 +546,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private RecyclerView rv;
         private LinearLayoutManager llm;
         String feedCachedUrl = "";
+        TextView todays;
 
         public PlaceholderFragment() {
 
@@ -517,11 +570,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             View rootView = inflater.inflate(R.layout.fragment_home_nav, container, false);
             feed = (Feed) getArguments().getSerializable(ARG_FEED);
             if (feed != null) {
+                todays = (TextView) rootView.findViewById(R.id.todays_default_text);
+                todays.setVisibility(View.INVISIBLE);
                 rv = (RecyclerView) rootView.findViewById(R.id.rvArticles);
                 rv.setHasFixedSize(true);
                 llm = new LinearLayoutManager(getActivity());
                 rv.setLayoutManager(llm);
                 displayFeed();
+            }
+            else{
+                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
+                 todays.setVisibility(View.VISIBLE);
+
             }
             return rootView;
         }
