@@ -24,6 +24,16 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Change View functionality goes here
 
+        tv_defaultView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(SettingsActivity.this, DefaultViewActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
 
         // Change Password Functionality goes here
 

@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303f9f</color>
-    <color name="colorAccent">#FFFFFF</color>
+    <color name="colorAccent">#2bb24c</color>
     <color name="black">#000000</color>
     <color name="feedly_grren">#2bb24c</color>
     <color name="warn_btn">#D32F2F</color>

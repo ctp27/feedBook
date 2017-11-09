@@ -28,6 +28,11 @@
     <string name="tv_default_view">Default View</string>
     <string name="tv_change_password">Change Password</string>
 
+    <!-- Default View Page -->
+    <string name="rb_personal">Personal</string>
+    <string name="rb_explore">Explore</string>
+    <string name="rb_home">Home</string>
+    
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password (optional)</string>
