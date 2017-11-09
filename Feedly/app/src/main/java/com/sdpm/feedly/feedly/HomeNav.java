@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -39,6 +40,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.sdpm.feedly.utils.DownloadXml;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -92,7 +94,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         setContentView(R.layout.activity_no_login_side_nav);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        Date now = new Date();
+        String s = DateUtils.getRelativeDateTimeString(this,now.getTime(),DateUtils.MINUTE_IN_MILLIS,DateUtils.WEEK_IN_MILLIS,0).toString();
+        Log.d(TAG,"The date is "+s);
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
         /**
@@ -116,8 +120,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
     private void initializeObjects(){
-
-
 
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
         editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
@@ -547,7 +549,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
 
     }
-
 
 
     private void showTheEditContentDrawer(){

@@ -162,17 +162,19 @@ public class feed_desc extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            setRetainInstance(true);
+
             Spanned spanned;
             rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
             a = (Article) getArguments().getSerializable(ARG_ARTICLE);
             String theCategory = (String) getArguments().getSerializable(ARG_CATEGORY);
+
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
             btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
+
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {
                     btnShareOnFB.setOnClickListener(new View.OnClickListener() {
@@ -252,6 +254,7 @@ public class feed_desc extends AppCompatActivity {
                 articleDesc.setText(strBuilder);
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
+
             return rootView;
         }
 
