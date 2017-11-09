@@ -33,7 +33,6 @@ public class LoginActivity extends AppCompatActivity {
         final Button b_sign_up = (Button) findViewById(R.id.button_sign_up);
         final Button b_settings = (Button) findViewById(R.id.button_settings);
 
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         database = FirebaseDatabase.getInstance().getReference();
 
         // Login Button

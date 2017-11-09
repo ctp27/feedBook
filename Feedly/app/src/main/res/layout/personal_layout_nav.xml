@@ -98,7 +98,7 @@
                 android:layout_margin="20dp"
                 android:textSize="15sp"
                 android:id="@+id/edit_cancel_btn"
-                android:text="Cancel"/>
+                android:text="Back"/>
 
         </LinearLayout>
 

@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.google.firebase.database.FirebaseDatabase;
+
 public class LandingPageActivity extends AppCompatActivity {
 
     public static final String token = "Logged";
@@ -13,7 +15,7 @@ public class LandingPageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing_page);
-
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         /**
          *
          * Check if file exists in memory.
