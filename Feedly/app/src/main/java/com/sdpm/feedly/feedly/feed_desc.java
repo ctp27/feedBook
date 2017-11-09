@@ -37,6 +37,7 @@ import android.widget.TextView;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.sdpm.feedly.utils.TempStores;
+import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
 
 import java.io.FileNotFoundException;
@@ -208,7 +209,11 @@ public class feed_desc extends AppCompatActivity {
                 else{
                     author = "Feedly";
                 }
-                articleInfo.setText(theCategory+"/"+author+"/"+"6h ago");
+                String theDate = a.getPublishedDate();
+                if(theDate==null){
+                    theDate = "N/A";
+                }
+                articleInfo.setText(theCategory+"/"+author+"/"+ TimeDateUtils.getTimePassed(getContext(),theDate));
 
                 if (Build.VERSION.SDK_INT >= 24) {
                     spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {

@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.sdpm.feedly.utils.HtmlParseUtils;
 import com.sdpm.feedly.utils.TempStores;
+import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -73,12 +74,19 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         setThePartialDescription(holder,position);
 
         String author = articles.get(position).getAuthor();
+        String dateString=null;
+        if(articles.get(position).getPublishedDate()!=null){
+            dateString = articles.get(position).getPublishedDate();
+        }else{
+            dateString = "N/A";
+        }
+
         if(author!=null) {
 
-            holder.feedInfo.setText("by " + articles.get(position).getAuthor() + " - ");
+            holder.feedInfo.setText("by " + articles.get(position).getAuthor() + " - "+ TimeDateUtils.getTimePassed(context,dateString));
         }
         else{
-            holder.feedInfo.setText("by Feedly - ");
+            holder.feedInfo.setText("by Feedly - "+ TimeDateUtils.getTimePassed(context,dateString));
         }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
