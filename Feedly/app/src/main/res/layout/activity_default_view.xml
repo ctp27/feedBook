@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    style="?pageBackground"
+    tools:context="com.sdpm.feedly.feedly.DefaultViewActivity">
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/rgroup">
+
+    <RadioButton
+        android:id="@+id/rb_home"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="@string/rb_home"
+        style="?blackText"
+        android:onClick="rbclick"
+        tools:ignore="OnClick" />
+
+    <RadioButton
+        android:id="@+id/rb_explore"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="@string/rb_explore"
+        style="?blackText"
+        android:onClick="rbclick"
+        tools:ignore="OnClick" />
+
+    <RadioButton
+        android:id="@+id/rb_personal"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="@string/rb_personal"
+        style="?blackText"
+        android:onClick="rbclick"
+        tools:ignore="OnClick" />
+
+    </RadioGroup>
+
+
+</RelativeLayout>

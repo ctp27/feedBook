@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <style name="Theme.Material_Light" parent ="Theme.AppCompat.Light">
+        <item name="pageBackground">@style/page_background_wh</item>
+        <item name="subHeader">@style/text_dark_gray</item>
+        <item name="blackText">@style/text_black</item>
+        <item name="navBackground">@style/nav_background_light_gray</item>
+        <item name="actionBarStyle">@style/AppTheme</item>
+        <item name="navListStyle">@style/nav_list_wh</item>
+        <item name="buttonColor">@style/btn_background_wh</item>
+        <item name="editTextBorder">@style/edit_text_border_black</item>
+    </style>
+
+    <style name="Theme.Material_Dark" parent ="Theme.AppCompat.Light">
+        <item name="pageBackground">@style/page_background_off_black</item>
+        <item name="subHeader">@style/text_dark_gray</item>
+        <item name="blackText">@style/text_wh</item>
+        <item name="navBackground">@style/nav_background_bl</item>
+        <item name="actionBarStyle">@style/AppTheme</item>
+        <item name="navListStyle">@style/nav_list_black</item>
+        <item name="buttonColor">@style/btn_background_black</item>
+        <item name="editTextBorder">@style/edit_text_border_wh</item>
+    </style>
+</resources>

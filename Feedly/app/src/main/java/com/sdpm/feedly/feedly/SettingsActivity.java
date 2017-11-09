@@ -3,16 +3,23 @@ package com.sdpm.feedly.feedly;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+
+import com.sdpm.feedly.utils.ChangeTheme;
 
 public class SettingsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_settings);
 
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Settings");
         // Initializing TextViews
 
         TextView tv_theme = (TextView) findViewById(R.id.tv_theme);
@@ -23,6 +30,25 @@ public class SettingsActivity extends AppCompatActivity {
 
 
         // Change View functionality goes here
+
+        tv_theme.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ChangeTheme.switchTheme(SettingsActivity.this);
+            }
+        });
+
+
+        tv_defaultView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent(SettingsActivity.this, DefaultViewActivity.class);
+                startActivity(intent);
+
+            }
+        });
 
 
         // Change Password Functionality goes here
@@ -37,5 +63,19 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if(id == android.R.id.home){
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

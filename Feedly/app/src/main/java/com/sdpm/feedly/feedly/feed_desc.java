@@ -369,6 +369,7 @@ public class feed_desc extends AppCompatActivity {
         @Override
         public Parcelable saveState() {
             Bundle bundle = (Bundle) super.saveState();
+            if(bundle!=null)
             bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
             return bundle;
         }

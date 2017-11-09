@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <attr name="pageBackground" format="reference"/>
+    <attr name="subHeader" format="reference"/>
+    <attr name="blackText" format="reference"/>
+    <attr name="navBackground" format="reference"/>
+    <attr name="actionBarStyle" format="reference"/>
+    <attr name="navListStyle" format="reference"/>
+    <attr name="buttonColor" format="reference"/>
+    <attr name="editTextBorder" format="reference"/>
+
+</resources>

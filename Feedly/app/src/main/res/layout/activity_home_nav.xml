@@ -5,6 +5,7 @@
     android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    style="?pageBackground"
     android:fitsSystemWindows="true"
     tools:context="com.sdpm.feedly.feedly.HomeNav">
 

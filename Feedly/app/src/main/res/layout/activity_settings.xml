@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    style="?pageBackground"
     tools:context="com.sdpm.feedly.feedly.SettingsActivity">
 
     <TextView
@@ -11,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="50sp"
         android:text="@string/tv_theme"
+        style="?blackText"
         android:paddingStart="10dp"
         android:paddingTop="10dp"
         tools:ignore="RtlSymmetry" />
@@ -32,6 +34,7 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/tv_theme"
         android:text="@string/tv_default_view"
+        style="?blackText"
         android:paddingStart="10dp"
         android:paddingTop="10dp"
         tools:ignore="RtlSymmetry" />
@@ -52,6 +55,7 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/tv_defaultView"
         android:text="@string/tv_change_password"
+        style="?blackText"
         android:paddingStart="10dp"
         android:paddingTop="10dp"
         tools:ignore="RtlSymmetry" />

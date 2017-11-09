@@ -37,6 +37,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.sdpm.feedly.utils.ChangeTheme;
 import com.sdpm.feedly.utils.DownloadXml;
 
 import java.util.ArrayList;
@@ -68,8 +69,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private ArrayList<Feed> theFeeds;
     private ArrayList<Feed> exploreFeeds;
     String email = "";
-    ExpandableListAdapter expListAdapter;
-    CheckboxExpandableListAdapter checkboxExpandableListAdapter;
+    ExpandableListAdapter expListAdapter = null;
+    CheckboxExpandableListAdapter checkboxExpandableListAdapter = null;
     ExpandableListView expListView;
     ExpandableListView editFeedsExpListView;
     List<String> personalCategoriesList;
@@ -77,6 +78,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private DrawerLayout drawer;
     private  NavigationView navView;
 
+    private Button logoutBtn;
     private Button editFeedContentBtn;
     private Button editCancelBtn;
     private Button removeFeedsBtn;
@@ -87,10 +89,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private LinearLayout editContentLayout;
 
     private static final String TAG = "HomeNav";
+    private boolean resumeFromSearch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_no_login_side_nav);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -119,6 +123,19 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+
+
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(resumeFromSearch) {
+            createExpandableListOfPersonalFeeds();
+            resumeFromSearch = false;
+        }
+
+    }
+
     private void initializeObjects(){
 
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
@@ -127,18 +144,30 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         removeFeedsBtn = (Button) findViewById(R.id.remove_feed_btn);
         editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
         addSourceBtn = (Button) findViewById(R.id.add_content_button);
+        logoutBtn = (Button) findViewById(R.id.logout_button);
 
-        addSourceBtn.setOnClickListener(new View.OnClickListener() {
-
+        logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+                SharedPreferences.Editor edit = userDetails.edit();
+                edit.clear();
+                edit.putString("email","");
+                edit.commit();
+                Intent intent = new Intent(HomeNav.this,LoginActivity.class);
+                startActivity(intent);
+            }
+        });
 
+        addSourceBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resumeFromSearch = true;
                 Intent intent = new Intent(HomeNav.this,AddActivity.class);
                 intent.putExtra("email",email);
                 startActivity(intent);
             }
         });
-
 
         editFeedContentBtn.setOnClickListener(new View.OnClickListener() {
 
@@ -147,7 +176,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 showTheEditContentDrawer();
             }
         });
-
 
         editCancelBtn = (Button) findViewById(R.id.edit_cancel_btn);
         editCancelBtn.setOnClickListener(new View.OnClickListener() {
@@ -187,7 +215,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                         break;
                                     }
                                 }
-
                                 if(childDataSnapshot != null && dbSnap != null && childDataSnapshot.hasChild(f.getCategory())){
                                     DataSnapshot subSnapShot = childDataSnapshot.child(f.getCategory());
                                     for(DataSnapshot s : subSnapShot.getChildren()) {
@@ -248,13 +275,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
         navView.addView(layout);
 
-
         //   drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-
 
         ListView lv = (ListView) findViewById(R.id.default_nav_list);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -267,16 +292,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         theFeeds = exploreFeeds;
                         if(theFeeds != null) {
                             mSectionsPagerAdapter.notifyDataSetChanged();
-                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
                         }
                 }
             }
         });
+
         expListView = (ExpandableListView) findViewById(R.id.personal_feeds_expandable_lv);
         editFeedsExpListView = (ExpandableListView) findViewById(R.id.editcontent_expandable);
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-
             @Override
             public boolean onChildClick(ExpandableListView parent, View v,
                                         int groupPosition, int childPosition, long id) {
@@ -292,11 +317,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
         });
 
-
         editFeedsExpListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 CheckedTextView ctv = (CheckedTextView)view;
                 if (ctv.isChecked()){
                     Toast.makeText(getApplicationContext(),"uncheckd",Toast.LENGTH_LONG).show();
@@ -304,12 +327,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 else {
                     Toast.makeText(getApplicationContext(),"checked",Toast.LENGTH_LONG).show();
                 }
-
             }
         });
-
     }
-
 
     public void  prepareData(){
         exploreFeeds = new ArrayList<>();
@@ -325,9 +345,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     theFeeds = exploreFeeds;
                     LoadDataOnScreen();
                     if(!email.equals("")) {
-
-                            createExpandableListOfPersonalFeeds();
-                        
+                        createExpandableListOfPersonalFeeds();
                     }
                 }
             }
@@ -360,8 +378,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
     public void createExpandableListOfPersonalFeeds(){
-        personalCategoriesList = new ArrayList<>();
-        personalFeedsUnderCategory = new HashMap<String,List<Feed>>();
+        if(personalCategoriesList != null){
+            personalCategoriesList.clear();
+        } else {
+            personalCategoriesList = new ArrayList<>();
+        }
+
+        if(personalFeedsUnderCategory != null) {
+            personalFeedsUnderCategory.clear();
+        } else {
+            personalFeedsUnderCategory = new HashMap<String, List<Feed>>();
+        }
+
         database.child("PersonalFeeds").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -388,14 +416,17 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     }
 
                     if (personalCategoriesList.size() != 0 && personalFeedsUnderCategory.size() != 0) {
-                        expListAdapter = new ExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory);
-                        expListView.setAdapter(expListAdapter);
+                        if(expListAdapter != null && checkboxExpandableListAdapter != null) {
+                            expListAdapter.notifyDataSetChanged();
+                            checkboxExpandableListAdapter.notifyDataSetChanged();
+                        }else {
+                            expListAdapter = new ExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory);
+                            expListView.setAdapter(expListAdapter);
 
-                        /* Set the edit content adapter */
-                        checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
-                        editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
-                        Log.d("BLAH","Setting the adapter");
-
+                            /* Set the edit content adapter */
+                            checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
+                            editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
+                        }
                     }
                 }
             }
@@ -545,9 +576,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
             return null;
         }
-
-
-
     }
 
 
