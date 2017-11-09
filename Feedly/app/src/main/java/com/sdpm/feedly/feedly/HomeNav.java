@@ -312,12 +312,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     theFeeds = exploreFeeds;
                     LoadDataOnScreen();
                     if(!email.equals("")) {
-                        try {
-//                            createExpandableListOfPersonalFeeds();
-                        }
-                        catch(Exception e){
-//                            TODO: Remove this try catch block
-                        }
+
+                            createExpandableListOfPersonalFeeds();
+                        
                     }
                 }
             }
