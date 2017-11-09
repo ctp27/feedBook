@@ -72,7 +72,6 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
         feedImg = (ImageView) convertView.findViewById(R.id.edit_feed_photo);
         feedTitle = (TextView) convertView.findViewById(R.id.edit_feed_title);
         theCheckbox = (CheckBox) convertView.findViewById(R.id.edit_feed_checkbox);
-
         feedTitle.setText(childFeed.getName());
         feedImg.setImageResource(R.drawable.feed);
 

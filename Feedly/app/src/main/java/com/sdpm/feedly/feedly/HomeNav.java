@@ -78,6 +78,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button editFeedContentBtn;
     private Button editCancelBtn;
     private Button removeFeedsBtn;
+    private Button addSourceBtn;
     private Toolbar toolbar;
 
     private LinearLayout navDrawerLayout;
@@ -116,14 +117,29 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     private void initializeObjects(){
 
+
+
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
         editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
 
         removeFeedsBtn = (Button) findViewById(R.id.remove_feed_btn);
         editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
+        addSourceBtn = (Button) findViewById(R.id.add_content_button);
+
+        addSourceBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(HomeNav.this,AddActivity.class);
+                intent.putExtra("email",email);
+                startActivity(intent);
+            }
+        });
 
 
         editFeedContentBtn.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 showTheEditContentDrawer();

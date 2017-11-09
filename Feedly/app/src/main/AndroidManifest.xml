@@ -27,13 +27,7 @@
         <activity
             android:name=".LoginActivity"
             android:label="@string/app_name"
-
-            android:noHistory="true">
-
-        </activity>
-
-
-
+            android:noHistory="true"></activity>
         <activity
             android:name=".feed_desc"
             android:label="@string/title_activity_feed_desc"
@@ -75,7 +69,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".SettingsActivity" />
-        <activity android:name=".ChangePasswordActivity"></activity>
+        <activity android:name=".ChangePasswordActivity" />
+        <activity android:name=".AddActivity"></activity>
     </application>
 
 </manifest>
