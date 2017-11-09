@@ -1,24 +1,40 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class ChangePasswordActivity extends AppCompatActivity {
+
+    DatabaseReference database;
+    String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
 
-
-        // Dummy data for old password
-        final String pwd = "jasti";
-
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Change Password");
+        final SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        email = userDetails.getString("email", "");
         // Initializing Fields & Button
 
         final EditText et_oldPassword = (EditText) findViewById(R.id.et_oldPassword);
@@ -33,48 +49,65 @@ public class ChangePasswordActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                String oldPassword = et_oldPassword.getText().toString();
-                String newPassword = et_newPassword.getText().toString();
+                final String oldPassword = et_oldPassword.getText().toString();
+                final String newPassword = et_newPassword.getText().toString();
                 String confirmPassword = et_confirmPassword.getText().toString();
 
-                if(oldPassword.equals(pwd)){
-
-                    if(newPassword.equals(confirmPassword)){
-
-                        if(oldPassword.equals(newPassword)){
-
-                            Toast.makeText(getApplicationContext(),"This password has already been used, pick a new one",Toast.LENGTH_SHORT).show();
-
+                if(newPassword.equals(confirmPassword)){
+                    database = FirebaseDatabase.getInstance().getReference();
+                    database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            DataSnapshot userSnapShot = null;
+                            DatabaseReference userDbRef = null;
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if(snapshot.child("email_id").getValue().toString().equals(email)){
+                                    userSnapShot = snapshot;
+                                    userDbRef = database.child("Users").child(snapshot.getKey());
+                                    break;
+                                }
+                            }
+                            if(userSnapShot != null && userDbRef != null) {
+                                if (userSnapShot.child("password").getValue().toString().equals(oldPassword)) {
+                                    if(oldPassword.equals(newPassword)){
+                                        Toast.makeText(getApplicationContext(), "Old password and New password are same", Toast.LENGTH_SHORT).show();
+                                    }else {
+                                        userDbRef.child("password").setValue(newPassword);
+                                        Toast.makeText(getApplicationContext(), "Your password has been updated successfully", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    Toast.makeText(getApplicationContext(),"Enter correct Old Password",Toast.LENGTH_SHORT).show();
+                                }
+                             } else {
+                                Toast.makeText(getApplicationContext(),"System Malfunction",Toast.LENGTH_SHORT).show();
+                            }
                         }
-                        else {
 
-                            // Success
-                            Toast.makeText(getApplicationContext(), "Your password has been updated", Toast.LENGTH_SHORT).show();
-
-                            Intent intent = new Intent(ChangePasswordActivity.this, LoginActivity.class);
-                            startActivity(intent);
+                        @Override
+                        public void onCancelled(DatabaseError d){
+                            Log.d("Login DbError Msg ->",d.getMessage());
+                            Log.d("Login DbError Detail ->",d.getDetails());
                         }
-                    }
-
-                    else{
-
-                        Toast.makeText(getApplicationContext(),"Passwords don't match",Toast.LENGTH_SHORT).show();
-
-                    }
-
+                    });
+                } else {
+                    Toast.makeText(getApplicationContext(),"New Password and Confirm Password do not match",Toast.LENGTH_SHORT).show();
                 }
-                else{
-
-                    Toast.makeText(getApplicationContext(),"Your Old password isn't right",Toast.LENGTH_SHORT).show();
-
-                }
-
-
-
             }
         });
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-
+        //noinspection SimplifiableIfStatement
+        if(id == android.R.id.home){
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

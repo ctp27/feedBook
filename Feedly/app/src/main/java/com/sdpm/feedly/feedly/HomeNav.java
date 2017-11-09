@@ -282,7 +282,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         theFeeds = exploreFeeds;
                         if(theFeeds != null) {
                             mSectionsPagerAdapter.notifyDataSetChanged();
-                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                            getSupportActionBar().setTitle(theFeeds.get(0).getCategory()+"/"+theFeeds.get(0).getName());
                         }
                 }
             }
