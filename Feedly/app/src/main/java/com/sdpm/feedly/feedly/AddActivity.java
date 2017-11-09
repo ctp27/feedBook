@@ -222,6 +222,7 @@ public class AddActivity extends AppCompatActivity {
             btn.setImageResource(R.drawable.ic_add_black_24dp);
             btn.setEnabled(true);
         }
+
         private boolean isAlreadyAdded(Feed childFeed) {
             boolean exists = false;
             for(String a : personalCategoriesList){

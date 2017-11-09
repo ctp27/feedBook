@@ -147,7 +147,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         });
 
 
-
         editCancelBtn = (Button) findViewById(R.id.edit_cancel_btn);
         editCancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -313,7 +312,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     theFeeds = exploreFeeds;
                     LoadDataOnScreen();
                     if(!email.equals("")) {
-                        createExpandableListOfPersonalFeeds();
+                        try {
+//                            createExpandableListOfPersonalFeeds();
+                        }
+                        catch(Exception e){
+//                            TODO: Remove this try catch block
+                        }
                     }
                 }
             }
@@ -452,6 +456,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         String feedCachedUrl = "";
 
         public PlaceholderFragment() {
+
         }
 
         /**

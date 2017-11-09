@@ -1,7 +1,5 @@
 package com.sdpm.feedly.feedly;
 
-import android.annotation.TargetApi;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,46 +9,33 @@ import android.graphics.drawable.LevelListDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.Nullable;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.transition.Visibility;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
-import android.text.util.Linkify;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import android.view.ViewParent;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.squareup.picasso.Picasso;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -58,7 +43,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import model.Article;
 
@@ -143,6 +127,7 @@ public class feed_desc extends AppCompatActivity {
         TextView articleDesc;
         ImageView articleImg;
         Button linkButton;
+        TextView articleInfo;
         FloatingActionButton btnShareOnFB;
         View rootView;
         public PlaceholderFragment() {
@@ -171,6 +156,7 @@ public class feed_desc extends AppCompatActivity {
             rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
             a = (Article) getArguments().getSerializable(ARG_ARTICLE);
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
+            articleInfo = (TextView) rootView.findViewById(R.id.article_info);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
             btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
@@ -194,7 +180,21 @@ public class feed_desc extends AppCompatActivity {
                     linkButton.setVisibility(View.GONE);
                 }
                 articleTitle.setText(a.getTitle());
-                articleImg.setImageResource(R.drawable.food);
+                if(a.getThumbnailLink()!=null){
+                    Picasso.with(getContext()).load(a.getThumbnailLink()).error(R.drawable.feed)
+                            .placeholder(R.drawable.feed)
+                            .into(articleImg);
+                }else {
+                    articleImg.setImageResource(R.drawable.feed);
+                }
+                String author;
+                if(a.getAuthor()!=null){
+                    author = a.getAuthor();
+                }
+                else{
+                    author = "Feedly";
+                }
+                articleInfo.setText("Gaming"+"/"+author+"/"+"6h ago");
 
                 if (Build.VERSION.SDK_INT >= 24) {
                     spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
