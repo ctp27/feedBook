@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:paddingTop="25dp"
     android:orientation="vertical"
+    style="?navBackground"
     android:background="#D3D3D3">
 
 
@@ -19,7 +20,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/default_nav_list"
             android:entries="@array/default_nav_array"
-            android:background="@android:color/white"/>
+            style="?navListStyle"/>
 
         <TextView
             android:layout_width="match_parent"
@@ -29,12 +30,13 @@
             android:layout_margin="15dp"
             android:layout_marginTop="30dp"
             android:text="PERSONAL FEEDS"
-            android:textColor="@android:color/darker_gray"/>
+            style="?blackText"/>
 
         <ExpandableListView
             android:id="@+id/personal_feeds_expandable_lv"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            style="?navListStyle"/>
 
         <Button
             android:id="@+id/add_content_button"
@@ -87,6 +89,7 @@
                 android:layout_height="wrap_content"
                 android:text="Remove"
                 android:id="@+id/remove_feed_btn"
+                android:background="@drawable/side_nav_button"
                 android:textSize="15sp"
                 android:enabled="false"
                 android:layout_margin="20dp"
@@ -98,7 +101,8 @@
                 android:layout_margin="20dp"
                 android:textSize="15sp"
                 android:id="@+id/edit_cancel_btn"
-                android:text="Cancel"/>
+                android:text="Cancel"
+                android:background="@drawable/side_nav_button"/>
 
         </LinearLayout>
 
@@ -106,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editcontent_expandable"
-            />
+            style="?navListStyle"/>
 
     </LinearLayout>
 

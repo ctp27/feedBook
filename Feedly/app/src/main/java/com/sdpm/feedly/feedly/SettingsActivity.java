@@ -6,11 +6,14 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import com.sdpm.feedly.utils.ChangeTheme;
+
 public class SettingsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_settings);
 
         // Initializing TextViews
@@ -23,6 +26,15 @@ public class SettingsActivity extends AppCompatActivity {
 
 
         // Change View functionality goes here
+
+        tv_theme.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ChangeTheme.switchTheme(SettingsActivity.this);
+            }
+        });
+
 
         tv_defaultView.setOnClickListener(new View.OnClickListener() {
             @Override

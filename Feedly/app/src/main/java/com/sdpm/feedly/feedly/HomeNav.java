@@ -36,6 +36,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.sdpm.feedly.utils.ChangeTheme;
 import com.sdpm.feedly.utils.DownloadXml;
 
 import java.util.ArrayList;
@@ -89,6 +90,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_no_login_side_nav);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

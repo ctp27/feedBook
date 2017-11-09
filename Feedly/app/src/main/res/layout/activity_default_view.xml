@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.sdpm.feedly.feedly.SettingsActivity">
+    style="?pageBackground"
+    tools:context="com.sdpm.feedly.feedly.DefaultViewActivity">
 
     <RadioGroup
         android:layout_width="match_parent"
@@ -16,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="@string/rb_home"
+        style="?blackText"
         android:onClick="rbclick"
         tools:ignore="OnClick" />
 
@@ -24,6 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="@string/rb_explore"
+        style="?blackText"
         android:onClick="rbclick"
         tools:ignore="OnClick" />
 
@@ -32,6 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="@string/rb_personal"
+        style="?blackText"
         android:onClick="rbclick"
         tools:ignore="OnClick" />
 

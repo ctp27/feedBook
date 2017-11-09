@@ -9,6 +9,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import com.sdpm.feedly.utils.ChangeTheme;
+
 import static com.sdpm.feedly.feedly.R.id.rgroup;
 
 public class DefaultViewActivity extends AppCompatActivity {
@@ -19,6 +21,7 @@ public class DefaultViewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_default_view);
 
         RadioButton default_rb = (RadioButton) findViewById(R.id.rb_home);
