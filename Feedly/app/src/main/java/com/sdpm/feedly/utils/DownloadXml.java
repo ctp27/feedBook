@@ -69,7 +69,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
             parser.parse(theFeed.getTheXml());
             theFeed.setArticleList(parser.getApplications());
 
-            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context);
+            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
             recyclerView.setAdapter(theAdapter);
 
     }

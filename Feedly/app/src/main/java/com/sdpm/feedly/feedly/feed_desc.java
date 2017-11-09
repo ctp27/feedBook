@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -35,6 +36,7 @@ import android.widget.TextView;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.sdpm.feedly.utils.TempStores;
 import com.squareup.picasso.Picasso;
 
 import java.io.FileNotFoundException;
@@ -63,6 +65,7 @@ public class feed_desc extends AppCompatActivity {
      */
     private ViewPager mViewPager;
     ArrayList<Article> articles;
+    private String category;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +77,10 @@ public class feed_desc extends AppCompatActivity {
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
+//        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
+        articles = (ArrayList<Article>)TempStores.getTheFeeds();
+        category = getIntent().getExtras().getString("category");
+        getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -122,6 +128,7 @@ public class feed_desc extends AppCompatActivity {
          * fragment.
          */
         private static final String ARG_ARTICLE = "ARTICLE";
+        private static final String ARG_CATEGORY = "CATEGORY";
         Article a;
         TextView articleTitle;
         TextView articleDesc;
@@ -131,17 +138,20 @@ public class feed_desc extends AppCompatActivity {
         FloatingActionButton btnShareOnFB;
         View rootView;
         public PlaceholderFragment() {
+
         }
 
         /**
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(Article article) {
+        public static PlaceholderFragment newInstance(Article article, String Category) {
             PlaceholderFragment fragment = new PlaceholderFragment();
+
             Bundle args = new Bundle();
             if(article != null) {
                 args.putSerializable(ARG_ARTICLE, article);
+                args.putSerializable(ARG_CATEGORY,Category);
             } else {
                 args.putString(ARG_ARTICLE, null);
             }
@@ -152,9 +162,11 @@ public class feed_desc extends AppCompatActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            setRetainInstance(true);
             Spanned spanned;
             rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
             a = (Article) getArguments().getSerializable(ARG_ARTICLE);
+            String theCategory = (String) getArguments().getSerializable(ARG_CATEGORY);
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
@@ -194,7 +206,7 @@ public class feed_desc extends AppCompatActivity {
                 else{
                     author = "Feedly";
                 }
-                articleInfo.setText("Gaming"+"/"+author+"/"+"6h ago");
+                articleInfo.setText(theCategory+"/"+author+"/"+"6h ago");
 
                 if (Build.VERSION.SDK_INT >= 24) {
                     spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
@@ -266,7 +278,9 @@ public class feed_desc extends AppCompatActivity {
             Intent i = new Intent("android.intent.action.feed.webview");
             i.putExtra("URL", url);
             startActivity(i);
+
         }
+
 
         class LoadImage extends AsyncTask<Object, Void, Bitmap> {
 
@@ -330,9 +344,9 @@ public class feed_desc extends AppCompatActivity {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
             if(articlesList != null && articlesList.size() > position) {
-                return PlaceholderFragment.newInstance(articlesList.get(position));
+                return PlaceholderFragment.newInstance(articlesList.get(position),category);
             }
-            return PlaceholderFragment.newInstance(null);
+            return PlaceholderFragment.newInstance(null,null);
         }
 
         @Override
@@ -347,6 +361,13 @@ public class feed_desc extends AppCompatActivity {
                 return articlesList.get(position).getTitle();
             }
             return null;
+        }
+
+        @Override
+        public Parcelable saveState() {
+            Bundle bundle = (Bundle) super.saveState();
+            bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
+            return bundle;
         }
     }
 

@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.sdpm.feedly.utils.HtmlParseUtils;
+import com.sdpm.feedly.utils.TempStores;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -26,10 +27,13 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     ArrayList<Article> articles;
     private Context context;
+    private String feedCategory;
 
-    public RVAdapter(ArrayList<Article> articles, Context context) {
+    public RVAdapter(ArrayList<Article> articles, Context context, String feedCategory) {
         this.articles = articles;
         this.context = context;
+        this.feedCategory = feedCategory;
+
     }
 
     public static class FeedViewHolder extends RecyclerView.ViewHolder{
@@ -82,7 +86,9 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
             public void onClick(View view) {
                 Intent i = new Intent("android.intent.action.feed.desc");
                 i.putExtra("position",position);
-                i.putExtra("articlesList",articles);
+                i.putExtra("category",feedCategory);
+//                i.putExtra("articlesList",articles);
+                TempStores.setTheFeeds(articles);
                 view.getContext().startActivity(i);
             }
         });
