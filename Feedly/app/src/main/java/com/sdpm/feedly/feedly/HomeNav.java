@@ -90,7 +90,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_no_login_side_nav);
-         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         /* Sets the Navigation drawer based on logged in state */
@@ -163,20 +163,31 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         boolean hasPersonalFeeds = false;
-                        DatabaseReference dbSnap = null;
+                        DatabaseReference dbSnapPersonal = null;
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             if(snapshot.hasChild(email.split("@")[0])){
                                 dataSnapshot = snapshot.child(email.split("@")[0]);
                                 hasPersonalFeeds = true;
-                                dbSnap = database.child("PersonalFeeds").child(snapshot.getKey()).child(email.split("@")[0]);
+                                dbSnapPersonal = database.child("PersonalFeeds").child(snapshot.getKey()).child(email.split("@")[0]);
                                 break;
                             }
                         }
-                        if(hasPersonalFeeds && dbSnap != null) {
+                        if(hasPersonalFeeds && dbSnapPersonal != null) {
                             boolean deletedSuccessfully = false;
+                            DataSnapshot childDataSnapshot;
                             for(Feed f : feedsToDelete){
-                                if(dataSnapshot.hasChild(f.getCategory())){
-                                    DataSnapshot subSnapShot = dataSnapshot.child(f.getCategory());
+                                childDataSnapshot = null;
+                                DatabaseReference dbSnap = null;
+                                for(DataSnapshot tempSnapShot : dataSnapshot.getChildren()) {
+                                    if (tempSnapShot.hasChild(f.getCategory())) {
+                                        childDataSnapshot = tempSnapShot;
+                                        dbSnap = dbSnapPersonal.child(tempSnapShot.getKey());
+                                        break;
+                                    }
+                                }
+
+                                if(childDataSnapshot != null && dbSnap != null && childDataSnapshot.hasChild(f.getCategory())){
+                                    DataSnapshot subSnapShot = childDataSnapshot.child(f.getCategory());
                                     for(DataSnapshot s : subSnapShot.getChildren()) {
                                         if (s.child("name").getValue().toString().equals(f.getName())) {
                                             dbSnap.child(subSnapShot.getKey()).child(s.getKey()).removeValue();
@@ -362,6 +373,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(hasPersonalFeeds) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for(DataSnapshot tempSnapShot : snapshot.getChildren()) {
+                            snapshot = tempSnapShot;
+                            break;
+                        }
                         personalCategoriesList.add(snapshot.getKey().toString());
                         List<Feed> feedList = new ArrayList<Feed>();
                         for (DataSnapshot subSnapShot : snapshot.getChildren()) {
@@ -408,7 +423,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            return true;
+            Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -522,9 +538,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         @Override
         public CharSequence getPageTitle(int position) {
-           if(theFeeds != null && theFeeds.size() > position){
-               return theFeeds.get(position).getName();
-           }
+            if(theFeeds != null && theFeeds.size() > position){
+                return theFeeds.get(position).getName();
+            }
             return null;
         }
 
@@ -543,7 +559,4 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         editContentLayout.setVisibility(View.GONE);
         navDrawerLayout.setVisibility(View.VISIBLE);
     }
-
-
-
 }

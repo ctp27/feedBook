@@ -74,8 +74,19 @@ public class CheckboxExpandableListAdapter extends BaseExpandableListAdapter {
         theCheckbox = (CheckBox) convertView.findViewById(R.id.edit_feed_checkbox);
 
         if(feedsToDelete.size() == 0) {
-          //  theCheckbox.setChecked(false);
-        }
+            theCheckbox.setChecked(false);
+        }/*else{
+            boolean inDeleteList = false;
+            for(int i=0 ;i<feedsToDelete.size(); i++){
+                if(feedsToDelete.get(i).getName().equals(childFeed.getName())){
+                    inDeleteList = true;
+                    break;
+                }
+            }
+            if(!inDeleteList){
+                theCheckbox.setChecked(false);
+            }
+        }*/
 
         feedTitle.setText(childFeed.getName());
         feedImg.setImageResource(R.drawable.feed);

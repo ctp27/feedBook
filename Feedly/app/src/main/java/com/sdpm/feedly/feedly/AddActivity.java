@@ -79,6 +79,10 @@ public class AddActivity extends AppCompatActivity {
                 }
                 if(hasPersonalFeeds) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for(DataSnapshot tempSnapShot : snapshot.getChildren()) {
+                            snapshot = tempSnapShot;
+                            break;
+                        }
                         personalCategoriesList.add(snapshot.getKey().toString());
                         List<Feed> feedList = new ArrayList<Feed>();
                         for (DataSnapshot subSnapShot : snapshot.getChildren()) {
