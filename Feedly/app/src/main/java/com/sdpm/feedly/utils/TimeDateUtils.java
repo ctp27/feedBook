@@ -32,11 +32,9 @@ public class TimeDateUtils {
 
 
         }
-        String s = DateUtils.getRelativeDateTimeString(context,startDate.getTime(),DateUtils.MINUTE_IN_MILLIS,DateUtils.DAY_IN_MILLIS,0).toString();
-        return  s;
+        return DateUtils.getRelativeDateTimeString(context,startDate.getTime(),DateUtils.MINUTE_IN_MILLIS,DateUtils.DAY_IN_MILLIS,0).toString();
 
     }
-
 
 
 }

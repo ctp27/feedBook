@@ -12,14 +12,6 @@
         android:layout_height="match_parent"
         android:id="@+id/rgroup">
 
-    <RadioButton
-        android:id="@+id/rb_home"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:text="@string/rb_home"
-        style="?blackText"
-        android:onClick="rbclick"
-        tools:ignore="OnClick" />
 
     <RadioButton
         android:id="@+id/rb_explore"

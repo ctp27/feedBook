@@ -1,9 +1,8 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -24,7 +23,7 @@ public class DefaultViewActivity extends AppCompatActivity {
         ChangeTheme.onActivityCreateSetTheme(this);
         setContentView(R.layout.activity_default_view);
 
-        RadioButton default_rb = (RadioButton) findViewById(R.id.rb_home);
+        RadioButton default_rb = (RadioButton) findViewById(R.id.rb_personal);
         int def_rb = default_rb.getId();
 
         SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
@@ -37,6 +36,7 @@ public class DefaultViewActivity extends AppCompatActivity {
 
 
     public void rbclick(View view) {
+
         int radiobuttonid = rg.getCheckedRadioButtonId();
         rb = (RadioButton) findViewById(radiobuttonid);
 

@@ -153,7 +153,7 @@
     <string name="add_your_first_source_to_get_personal_feeds">Add Your First Source to get personal feeds!</string>
 
     <string-array name="default_nav_array">
-        <item>Today</item>
+        <item>Personal</item>
         <item>Read Later</item>
         <item>Explore</item>
     </string-array>

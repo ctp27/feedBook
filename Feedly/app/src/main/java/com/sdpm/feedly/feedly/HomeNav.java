@@ -105,13 +105,29 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         /**
          * TODO: defaultFeed should be assigned based on the usersettings
          */
-        defaultFeed = EXPLORE_FEED;
+
+        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        long rb_button = userDetails.getInt("default_view",0);
+
+        if(rb_button==2131296451){
+            defaultFeed = TODAYS_FEED;
+
+        }
+        else if(rb_button == 2131296450)
+        {
+            Log.d(TAG,Long.toString(rb_button));
+            defaultFeed = EXPLORE_FEED;
+        }else{
+            defaultFeed = EXPLORE_FEED;
+        }
+
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
 
         database = FirebaseDatabase.getInstance().getReference();
 
         prepareData();
+
 
 
 
