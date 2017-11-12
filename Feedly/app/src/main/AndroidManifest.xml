@@ -71,7 +71,10 @@
         <activity android:name=".SettingsActivity" />
         <activity android:name=".ChangePasswordActivity" />
         <activity android:name=".AddActivity" />
-        <activity android:name=".DefaultViewActivity"></activity>
+        <activity android:name=".DefaultViewActivity" />
+        <activity
+            android:name=".UserInterestsActivity"
+            android:noHistory="true" />
     </application>
 
 </manifest>

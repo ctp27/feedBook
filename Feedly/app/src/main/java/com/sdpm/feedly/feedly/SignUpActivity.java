@@ -124,7 +124,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 edit.clear();
                                 edit.putString("email",email);
                                 edit.commit();
-                                Intent intent = new Intent(SignUpActivity.this, HomeNav.class);
+                                Intent intent = new Intent(SignUpActivity.this, UserInterestsActivity.class);
                                 startActivity(intent);
                             }
                         }
