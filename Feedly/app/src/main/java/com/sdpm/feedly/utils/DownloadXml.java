@@ -32,7 +32,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     public static final String EXPLORE_FEEDS="EXPLORE";
     public static final String TODAY = "T0DAY";
-    public static final String READLATER = "READLATER";
+    public static final String READLATER = "Read Later";
 
     private RecyclerView recyclerView;
     private String action;
@@ -96,10 +96,12 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
      *
      * TODO: Insert the code here for updating the recycler view to display feeds to read later on the home screen
      *
-     * @param theFeeds  The arrayList of Feeds with the downloaded and parsed articles collection
+     * @param theFeed  The read later feed from firebase
      */
 
-    private void displayReadLaterFeeds(ArrayList<Feed> theFeeds){
+    private void displayReadLaterFeeds(Feed theFeed){
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        recyclerView.setAdapter(theAdapter);
     }
 
     /**
@@ -123,7 +125,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 //                    displayTodaysFeeds(theFeeds);
                 break;
             case DownloadXml.READLATER:
-//                    displayReadLaterFeeds(theFeeds);
+                    displayReadLaterFeeds(theFeed);
                 break;
 
             default:
@@ -143,12 +145,13 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     protected Feed doInBackground(Feed... params) {
 
         Feed theFeed = params[0];
-        String s = downloadXML(theFeed.getLink());
-        if (s == null) {
-            Log.e(TAG, "doInBackground: Error downloading");
-        }
-        else {
-            theFeed.setTheXml(s);
+        if(this.action.equals(DownloadXml.EXPLORE_FEEDS)) {
+            String s = downloadXML(theFeed.getLink());
+            if (s == null) {
+                Log.e(TAG, "doInBackground: Error downloading");
+            } else {
+                theFeed.setTheXml(s);
+            }
         }
         return theFeed;
     }

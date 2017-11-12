@@ -43,6 +43,7 @@ import com.sdpm.feedly.utils.DownloadXml;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.Article;
 import model.Feed;
@@ -286,7 +287,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                     defaultFeed = TODAYS_FEED;
                                 }
                                 else {
-                                    prepareData();
+                                    prepareData(); ////why need this call ???? -----------------
                                     defaultFeed = EXPLORE_FEED;
                                 }
                             }
@@ -338,7 +339,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     case 0: displayPersonalFeeds();
                             defaultFeed =TODAYS_FEED;
                             break;
-                    case 1: Toast.makeText(HomeNav.this,"Coming soon!",Toast.LENGTH_LONG).show();
+                    case 1: // Read Later
+                        displayReadLaterArticle();
                         break;
                     case 2: //explore
                         if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
@@ -414,6 +416,47 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 Log.d("Login DbError Detail ->", d.getDetails());
             }
         });
+    }
+
+    public void displayReadLaterArticle(){
+        database.child("ReadLater").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean hasReadLater = false;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        hasReadLater = true;
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        break;
+                    }
+                }
+
+                if(hasReadLater) {
+                    ArrayList<Feed> readLaterFeedList = new ArrayList<>();
+                    ArrayList<Article> readLaterArticleList = new ArrayList<>();
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        Article a = snapshot.getValue(Article.class);
+                        readLaterArticleList.add(a);
+                    }
+                    readLaterFeedList.add(new Feed("",DownloadXml.READLATER,"",null,readLaterArticleList));
+                    theFeeds = readLaterFeedList;
+
+                    if(mSectionsPagerAdapter != null){
+                        mSectionsPagerAdapter.notifyDataSetChanged();
+                    } else {
+                        LoadDataOnScreen();
+                    }
+                    getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+
     }
 
     public void LoadDataOnScreen(){
@@ -603,7 +646,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
 
         private void displayFeed(){
-            DownloadXml downloadXml = new DownloadXml(getContext(),rv,DownloadXml.EXPLORE_FEEDS);
+            DownloadXml downloadXml;
+            if(DownloadXml.READLATER.equals(feed.getCategory())) {
+                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.READLATER);
+            } else {
+                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.EXPLORE_FEEDS);
+            }
             downloadXml.execute(feed);
             feedCachedUrl = feed.getLink();
         }
