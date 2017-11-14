@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="30dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:layout_marginLeft="15dp"
+            android:layout_margin="15dp"
+            android:layout_marginTop="30dp"
+            android:text="Save Story to Board"
+            style="?blackText"/>
+
+        <ListView
+            android:id="@+id/personal_board_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/create_board_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:background="@drawable/side_nav_button"
+            android:text="Create Board"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="10dp"/>
+    </LinearLayout>
+
+    </LinearLayout>

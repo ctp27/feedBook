@@ -1,6 +1,7 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -11,12 +12,14 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.design.widget.FloatingActionButton;
+import android.provider.ContactsContract;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -25,6 +28,8 @@ import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,13 +37,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
+
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,8 +61,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import model.Article;
+import model.Feed;
 
 public class feed_desc extends AppCompatActivity {
 
@@ -67,16 +86,24 @@ public class feed_desc extends AppCompatActivity {
     private ViewPager mViewPager;
     ArrayList<Article> articles;
     private String category;
+    static String email;
+    private static DrawerLayout drawer;
+    private static NavigationView navView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_feed_desc);
+        setContentView(R.layout.side_nav_feed_desc);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
+
+        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        email = userDetails.getString("email", "");
+
+        setSideNavBar();
 
 //        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
         articles = (ArrayList<Article>)TempStores.getTheFeeds();
@@ -94,6 +121,18 @@ public class feed_desc extends AppCompatActivity {
 
         int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
         //mViewPager.setOffscreenPageLimit(limit);
+    }
+
+    private void setSideNavBar(){
+        if (!email.equals("")) { // user logged in
+            drawer = (DrawerLayout) findViewById(R.id.side_nav_feed_desc_drawer_layout);
+            navView = (NavigationView) drawer.findViewById(R.id.feed_desc_nav_view);
+
+            LinearLayout layout;
+
+            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.feed_desc_nav, null);
+            navView.addView(layout);
+        }
     }
 
     @Override
@@ -136,7 +175,9 @@ public class feed_desc extends AppCompatActivity {
         ImageView articleImg;
         Button linkButton;
         TextView articleInfo;
-        FloatingActionButton btnShareOnFB;
+        FloatingActionMenu materialDesignFAM;
+        FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
+
         View rootView;
         public PlaceholderFragment() {
 
@@ -173,15 +214,31 @@ public class feed_desc extends AppCompatActivity {
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
-            btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
+            materialDesignFAM = (FloatingActionMenu) rootView.findViewById(R.id.material_design_android_floating_action_menu);
+            floatingActionButtonShare = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_fb_share);
+            floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
+            floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
+
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
 
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {
-                    btnShareOnFB.setOnClickListener(new View.OnClickListener() {
+                    floatingActionButtonShare.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             shareOnFB(a.getLink());
+                        }
+                    });
+                    floatingActionButtonReadLater.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            saveInReadLater(a);
+                        }
+                    });
+                    floatingActionButtonPersonalBoard.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            addToPersonalBoard(a);
                         }
                     });
                     linkButton.setOnClickListener(new View.OnClickListener() {
@@ -191,7 +248,9 @@ public class feed_desc extends AppCompatActivity {
                         }
                     });
                 } else {
-                    btnShareOnFB.setVisibility(View.GONE);
+                    floatingActionButtonShare.setVisibility(View.GONE);
+                    floatingActionButtonReadLater.setVisibility(View.GONE);
+                    floatingActionButtonPersonalBoard.setVisibility(View.GONE);
                     linkButton.setVisibility(View.GONE);
                 }
                 articleTitle.setText(a.getTitle());
@@ -277,6 +336,66 @@ public class feed_desc extends AppCompatActivity {
             strBuilder.removeSpan(span);
         }
 
+        private  void addToPersonalBoard(final Article a) {
+
+            drawer.openDrawer(Gravity.START);
+
+        }
+
+        private void saveInReadLater(final Article a){
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("ReadLater").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DatabaseReference readLaterDBRef = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.hasChild(email.split("@")[0])){
+                            dataSnapshot = snapshot.child(email.split("@")[0]);
+                            readLaterDBRef = database.child("ReadLater").child(snapshot.getKey()).child(email.split("@")[0]);
+                            break;
+                        }
+                    }
+                    Map ReadLaterArticle = new HashMap();
+                    ReadLaterArticle.put("author", a.getAuthor());
+                    ReadLaterArticle.put("description", a.getDescription());
+                    ReadLaterArticle.put("link", a.getLink());
+                    ReadLaterArticle.put("publishedDate", a.getPublishedDate());
+                    ReadLaterArticle.put("thumbnailLink", a.getThumbnailLink());
+                    ReadLaterArticle.put("title", a.getTitle());
+                    if(readLaterDBRef == null) {
+                        Map readLaterKey = new HashMap();
+                        readLaterKey.put("1",ReadLaterArticle);
+
+                        Map myReadLater = new HashMap();
+                        myReadLater.put(email.split("@")[0],readLaterKey);
+
+                        database.child("ReadLater").push().setValue(myReadLater);
+                    } else {
+                        Boolean articleAlreadyAdded = false;
+                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.child("link").getValue().toString().equals(a.getLink())){
+                                articleAlreadyAdded = true;
+                                break;
+                            }
+                        }
+                        if(!articleAlreadyAdded) {
+                            readLaterDBRef.push().setValue(ReadLaterArticle);
+                        } else {
+                            Toast.makeText(getContext(),"Article Already added in Personal Board",Toast.LENGTH_LONG);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+
+        }
         private void shareOnFB(String url){
             ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(Uri.parse(url)).build();
             ShareDialog.show(this, content);
