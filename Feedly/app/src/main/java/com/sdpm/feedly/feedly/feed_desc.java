@@ -40,6 +40,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -209,6 +210,8 @@ public class feed_desc extends AppCompatActivity {
         FloatingActionMenu materialDesignFAM;
         FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
 
+        RatingBar ratBar;
+
         View rootView;
         public PlaceholderFragment() {
 
@@ -250,6 +253,23 @@ public class feed_desc extends AppCompatActivity {
             floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
             floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
+
+            ratBar = (RatingBar) rootView.findViewById(R.id.rat);
+            // Go to database and find already set rating value, if that isn't present set values as 0
+            ratBar.setRating(Float.parseFloat("1.0"));
+
+            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+
+                    String rating = String.valueOf(v);
+
+                    // Insert rating value of article with email and article title to the database below
+                    Toast.makeText(getActivity().getApplicationContext(), rating, Toast.LENGTH_SHORT).show();
+
+                }
+            });
+
 
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {

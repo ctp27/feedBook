@@ -22,13 +22,24 @@
             android:layout_height="match_parent"
             android:orientation="vertical" >
 
+            <RatingBar
+                android:id="@+id/rat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ratings"
+                android:numStars="5"
+                android:stepSize="1.0"
+                android:layout_gravity="center"
+                />
+
             <TextView
                 android:id="@+id/article_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="This is a title This is a title This is a title This is a title This is a title"
                 android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_below="@id/rat"/>
 
             <TextView
                 android:id="@+id/article_info"
@@ -63,7 +74,17 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/article_desc"
                 android:text="Visit Webiste"
-                android:layout_marginBottom="55dp"/>
+                android:layout_marginBottom="5dp"/>
+
+            <RatingBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ratings"
+                android:layout_below="@+id/article_link_button"
+                android:layout_marginBottom="50dp"
+                android:numStars="5"
+                android:stepSize="1.0"
+                />
 
         </LinearLayout>
     </ScrollView>
