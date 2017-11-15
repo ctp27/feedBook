@@ -83,6 +83,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button editCancelBtn;
     private Button removeFeedsBtn;
     private Button addSourceBtn;
+    private Button settingsBtn;
     private Toolbar toolbar;
     private TextView todaysDefaultText;
 
@@ -187,6 +188,15 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
         addSourceBtn = (Button) findViewById(R.id.add_content_button);
         logoutBtn = (Button) findViewById(R.id.logout_button);
+        settingsBtn = (Button) findViewById(R.id.settings_button);
+
+        settingsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
+                startActivity(intent);
+            }
+        });
 
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -560,10 +570,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
-            startActivity(intent);
-        }
+//        if (id == R.id.action_settings) {
+//            Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
+//            startActivity(intent);
+//        }
 
         return super.onOptionsItemSelected(item);
     }

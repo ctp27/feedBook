@@ -59,6 +59,16 @@
             android:layout_marginBottom="10dp"/>
 
         <Button
+            android:id="@+id/settings_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:background="@drawable/side_nav_button"
+            android:text="@string/action_settings"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="10dp"/>
+
+        <Button
             android:id="@+id/logout_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
