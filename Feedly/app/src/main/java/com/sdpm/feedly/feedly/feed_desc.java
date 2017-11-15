@@ -23,6 +23,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -36,6 +37,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -87,6 +89,7 @@ public class feed_desc extends AppCompatActivity {
     ArrayList<Article> articles;
     private String category;
     static String email;
+    static String personalBoardName = null;
     private static DrawerLayout drawer;
     private static NavigationView navView;
 
@@ -124,15 +127,43 @@ public class feed_desc extends AppCompatActivity {
     }
 
     private void setSideNavBar(){
-        if (!email.equals("")) { // user logged in
-            drawer = (DrawerLayout) findViewById(R.id.side_nav_feed_desc_drawer_layout);
-            navView = (NavigationView) drawer.findViewById(R.id.feed_desc_nav_view);
+        final Button createBoardBtn, personalBoardDoneBtn;
+        final EditText personalBoardNameEditTxt;
+        final LinearLayout editPersonalBoardLayout;
+        LinearLayout layout;
 
-            LinearLayout layout;
+        drawer = (DrawerLayout) findViewById(R.id.side_nav_feed_desc_drawer_layout);
+        navView = (NavigationView) drawer.findViewById(R.id.feed_desc_nav_view);
+        layout = (LinearLayout) getLayoutInflater().inflate(R.layout.feed_desc_nav, null);
+        navView.addView(layout);
 
-            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.feed_desc_nav, null);
-            navView.addView(layout);
-        }
+        editPersonalBoardLayout = (LinearLayout) findViewById(R.id.edit_personal_board_layout);
+        personalBoardDoneBtn = (Button) findViewById(R.id.create_board_done_button);
+        personalBoardNameEditTxt = (EditText) findViewById(R.id.create_board_edit_text);
+        createBoardBtn = (Button) findViewById(R.id.create_board_button);
+
+        createBoardBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                personalBoardName = null;
+                personalBoardNameEditTxt.setText("");
+                editPersonalBoardLayout.setVisibility(View.VISIBLE);
+                createBoardBtn.setVisibility(View.GONE);
+            }
+        });
+
+        personalBoardDoneBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                personalBoardName = personalBoardNameEditTxt.getText().toString();
+                if(!personalBoardName.equals("")) {
+                    //add personalBoardName in list and check if name already exist or not
+                    createBoardBtn.setVisibility(View.VISIBLE);
+                    editPersonalBoardLayout.setVisibility(View.GONE);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -218,7 +249,6 @@ public class feed_desc extends AppCompatActivity {
             floatingActionButtonShare = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_fb_share);
             floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
             floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
-
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
 
             if(a != null) {
@@ -229,6 +259,18 @@ public class feed_desc extends AppCompatActivity {
                             shareOnFB(a.getLink());
                         }
                     });
+                    linkButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            openWebViewActivity(a.getLink());
+                        }
+                    });
+                } else {
+                    floatingActionButtonShare.setVisibility(View.GONE);
+                    linkButton.setVisibility(View.GONE);
+                }
+
+                if(!email.equals("")) {
                     floatingActionButtonReadLater.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -241,18 +283,11 @@ public class feed_desc extends AppCompatActivity {
                             addToPersonalBoard(a);
                         }
                     });
-                    linkButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            openWebViewActivity(a.getLink());
-                        }
-                    });
                 } else {
-                    floatingActionButtonShare.setVisibility(View.GONE);
                     floatingActionButtonReadLater.setVisibility(View.GONE);
                     floatingActionButtonPersonalBoard.setVisibility(View.GONE);
-                    linkButton.setVisibility(View.GONE);
                 }
+
                 articleTitle.setText(a.getTitle());
                 if(a.getThumbnailLink()!=null){
                     Picasso.with(getContext()).load(a.getThumbnailLink()).error(R.drawable.feed)
