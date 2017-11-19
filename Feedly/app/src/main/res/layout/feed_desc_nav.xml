@@ -39,8 +39,7 @@
             android:id="@+id/edit_personal_board_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:orientation="vertical">
 
             <EditText
                 android:id="@+id/create_board_edit_text"
@@ -50,7 +49,8 @@
                 android:background="@drawable/edittextbackground"
                 android:hint="Enter Board Name"
                 android:inputType="text"
-                android:textAlignment="center" />
+                android:textAlignment="center"
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/create_board_done_button"
@@ -61,7 +61,8 @@
                 android:background="@color/feedly_grren"
                 android:text="Done"
                 android:textColor="@android:color/white"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="gone"/>
         </LinearLayout>
     </LinearLayout>
 

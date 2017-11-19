@@ -17,6 +17,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -36,10 +37,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,7 +74,7 @@ import java.util.Map;
 import model.Article;
 import model.Feed;
 
-public class feed_desc extends AppCompatActivity {
+public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageChangeListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -88,9 +91,12 @@ public class feed_desc extends AppCompatActivity {
      */
     private ViewPager mViewPager;
     ArrayList<Article> articles;
+    Article articleOnScreen;
     private String category;
     static String email;
+    ArrayList<String> personalBoardList;
     static String personalBoardName = null;
+    ArrayAdapter<String> arrayAdapterPersonalBoard;
     private static DrawerLayout drawer;
     private static NavigationView navView;
 
@@ -108,18 +114,21 @@ public class feed_desc extends AppCompatActivity {
         email = userDetails.getString("email", "");
 
         setSideNavBar();
+        populatePersonalBoardList();
 
 //        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
         articles = (ArrayList<Article>)TempStores.getTheFeeds();
         category = getIntent().getExtras().getString("category");
         getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
+        articleOnScreen = articles.get(position);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),articles);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.addOnPageChangeListener(this);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(position);
 
@@ -127,10 +136,29 @@ public class feed_desc extends AppCompatActivity {
         //mViewPager.setOffscreenPageLimit(limit);
     }
 
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        if(articles!=null && position < articles.size()) {
+            articleOnScreen = articles.get(position);
+        } else {
+            articleOnScreen = null;
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
     private void setSideNavBar(){
         final Button createBoardBtn, personalBoardDoneBtn;
         final EditText personalBoardNameEditTxt;
-        final LinearLayout editPersonalBoardLayout;
+        ListView lvPersonalBoard;
         LinearLayout layout;
 
         drawer = (DrawerLayout) findViewById(R.id.side_nav_feed_desc_drawer_layout);
@@ -138,17 +166,24 @@ public class feed_desc extends AppCompatActivity {
         layout = (LinearLayout) getLayoutInflater().inflate(R.layout.feed_desc_nav, null);
         navView.addView(layout);
 
-        editPersonalBoardLayout = (LinearLayout) findViewById(R.id.edit_personal_board_layout);
         personalBoardDoneBtn = (Button) findViewById(R.id.create_board_done_button);
         personalBoardNameEditTxt = (EditText) findViewById(R.id.create_board_edit_text);
         createBoardBtn = (Button) findViewById(R.id.create_board_button);
+        lvPersonalBoard = (ListView) findViewById(R.id.personal_board_list_view);
+        personalBoardList = new ArrayList<String>();
+
+        arrayAdapterPersonalBoard = new ArrayAdapter<String>(
+                this, android.R.layout.simple_list_item_1, personalBoardList);
+
+        lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
 
         createBoardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 personalBoardName = null;
+                personalBoardNameEditTxt.setVisibility(View.VISIBLE);
                 personalBoardNameEditTxt.setText("");
-                editPersonalBoardLayout.setVisibility(View.VISIBLE);
+                personalBoardDoneBtn.setVisibility(View.VISIBLE);
                 createBoardBtn.setVisibility(View.GONE);
             }
         });
@@ -158,15 +193,32 @@ public class feed_desc extends AppCompatActivity {
             public void onClick(View view) {
                 personalBoardName = personalBoardNameEditTxt.getText().toString();
                 if(!personalBoardName.equals("")) {
-                    //add personalBoardName in list and check if name already exist or not
-                    createBoardBtn.setVisibility(View.VISIBLE);
-                    editPersonalBoardLayout.setVisibility(View.GONE);
+                    if(personalBoardList.contains(personalBoardName)) {
+                        Toast.makeText(getApplicationContext(),"Personal Board Name " + personalBoardName +" already exists",Toast.LENGTH_LONG).show();
+                        personalBoardName = "";
+                    } else { //add in db with selected article and close nav bar
+                        personalBoardDoneBtn.setVisibility(View.GONE);
+                        personalBoardNameEditTxt.setVisibility(View.GONE);
+                        createBoardBtn.setVisibility(View.VISIBLE);
+                        personalBoardList.add(personalBoardName);
+                        arrayAdapterPersonalBoard.notifyDataSetChanged();
+                        drawer.closeDrawer(Gravity.START);
+                        articleOnScreen.getTitle();
+                    }
                 }
             }
         });
-
     }
 
+    private void populatePersonalBoardList() {
+        //fetch from db and notify adapter
+
+        personalBoardList.add("List1");
+        personalBoardList.add("List2");
+        arrayAdapterPersonalBoard.notifyDataSetChanged();
+
+
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -373,7 +425,6 @@ public class feed_desc extends AppCompatActivity {
                 articleDesc.setText(strBuilder);
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
-
             return rootView;
         }
 
@@ -512,7 +563,7 @@ public class feed_desc extends AppCompatActivity {
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         ArrayList<Article> articlesList;
 
@@ -529,6 +580,11 @@ public class feed_desc extends AppCompatActivity {
                 return PlaceholderFragment.newInstance(articlesList.get(position),category);
             }
             return PlaceholderFragment.newInstance(null,null);
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
         }
 
         @Override
