@@ -214,7 +214,6 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                                         articleAlreadyExisitsInBoard = true;
                                         break;
                                     }
-
                                 }
                             }
                         }
@@ -293,8 +292,10 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                             personalBoardList.add(subsnapshot.getKey().toString());
                         }
                     }
-                    arrayAdapterPersonalBoard.notifyDataSetChanged();
+                } else {
+                    personalBoardList.add("My Board");
                 }
+                arrayAdapterPersonalBoard.notifyDataSetChanged();
             }
 
             @Override
