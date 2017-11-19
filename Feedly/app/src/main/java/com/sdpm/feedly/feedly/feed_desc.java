@@ -37,6 +37,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -177,6 +178,63 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
 
         lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
 
+        lvPersonalBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    final int position, long id) {
+                //check article is not already in board
+                // if yes call addArticleInPersonalBoard Function
+                final DatabaseReference database;
+                database = FirebaseDatabase.getInstance().getReference();
+
+                database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Boolean articleAlreadyExisitsInBoard = false;
+                        DatabaseReference personalBoardDBRef = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.hasChild(email.split("@")[0])){
+                                dataSnapshot = snapshot.child(email.split("@")[0]);
+                                personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                                break;
+                            }
+                        }
+                        if(personalBoardDBRef  != null) {
+                            Boolean boardExists = false;
+                            for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if(snapshot.child(personalBoardList.get(position)).exists()) {
+                                    dataSnapshot = snapshot.child(personalBoardList.get(position));//dataSnapshot.child(snapshot.getKey()).child(personalBoardList.get(position));
+                                    boardExists = true;
+                                    break;
+                                }
+                            }
+                            if(boardExists) {
+                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                    if(snapshot.child("link").getValue().toString().equals(articleOnScreen.getLink())){
+                                        articleAlreadyExisitsInBoard = true;
+                                        break;
+                                    }
+
+                                }
+                            }
+                        }
+                        if(articleAlreadyExisitsInBoard) {
+                            Toast.makeText(getApplicationContext(), "Article already exists in board " + personalBoardList.get(position), Toast.LENGTH_LONG).show();
+                        } else {
+                            addArticleInPersonalBoard(articleOnScreen,  personalBoardList.get(position));
+                            drawer.closeDrawer(Gravity.START);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Login DbError Msg ->", d.getMessage());
+                        Log.d("Login DbError Detail ->", d.getDetails());
+                    }
+                });
+            }
+        });
+
         createBoardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -202,23 +260,121 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                         createBoardBtn.setVisibility(View.VISIBLE);
                         personalBoardList.add(personalBoardName);
                         arrayAdapterPersonalBoard.notifyDataSetChanged();
+                        addArticleInPersonalBoard(articleOnScreen, personalBoardName);
                         drawer.closeDrawer(Gravity.START);
-                        articleOnScreen.getTitle();
                     }
                 }
             }
         });
     }
 
+    /**
+     * Fetch board names from db and notify adapter
+     */
     private void populatePersonalBoardList() {
-        //fetch from db and notify adapter
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
 
-        personalBoardList.add("List1");
-        personalBoardList.add("List2");
-        arrayAdapterPersonalBoard.notifyDataSetChanged();
+        database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference personalBoardDBRef = null;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                        break;
+                    }
+                }
 
+                if(personalBoardDBRef  != null) {
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for(DataSnapshot subsnapshot : snapshot.getChildren()) {
+                            personalBoardList.add(subsnapshot.getKey().toString());
+                        }
+                    }
+                    arrayAdapterPersonalBoard.notifyDataSetChanged();
+                }
+            }
 
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
     }
+
+    /**
+     * is article already in the board will be handled before calling this function
+     **/
+    private void addArticleInPersonalBoard(final Article article, final String boardName) {
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference personalBoardDBRef = null;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                        break;
+                    }
+                }
+                Map personalBoardArticle = new HashMap();
+                personalBoardArticle.put("author", article.getAuthor());
+                personalBoardArticle.put("description", article.getDescription());
+                personalBoardArticle.put("link", article.getLink());
+                personalBoardArticle.put("publishedDate", article.getPublishedDate());
+                personalBoardArticle.put("thumbnailLink", article.getThumbnailLink());
+                personalBoardArticle.put("title", article.getTitle());
+                if(personalBoardDBRef  == null) {
+                    Map personalBoardArticleKey = new HashMap();
+                    personalBoardArticleKey.put("1",personalBoardArticle);
+
+                    Map personalBoard = new HashMap();
+                    personalBoard.put(boardName, personalBoardArticleKey);
+
+                    Map personalBoardKey = new HashMap();
+                    personalBoardKey.put("1", personalBoard);
+
+                    Map myPersonalBoard = new HashMap();
+                    myPersonalBoard.put(email.split("@")[0],personalBoardKey);
+
+                    database.child("PersonalBoard").push().setValue(myPersonalBoard);
+                } else {
+                    Boolean boardExists = false;
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.child(boardName).exists()){
+                            boardExists = true;
+                            personalBoardDBRef = personalBoardDBRef.child(snapshot.getKey()).child(boardName);
+                            break;
+                        }
+                    }
+                    if(boardExists) {
+                        personalBoardDBRef.push().setValue(personalBoardArticle);
+                    } else {
+                        Map personalBoardArticleKey = new HashMap();
+                        personalBoardArticleKey.put("1",personalBoardArticle);
+
+                        Map personalBoard = new HashMap();
+                        personalBoard.put(boardName, personalBoardArticleKey);
+
+                        personalBoardDBRef.push().setValue(personalBoard);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
