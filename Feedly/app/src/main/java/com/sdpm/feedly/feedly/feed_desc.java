@@ -203,7 +203,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                             Boolean boardExists = false;
                             for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                 if(snapshot.child(personalBoardList.get(position)).exists()) {
-                                    dataSnapshot = snapshot.child(personalBoardList.get(position));//dataSnapshot.child(snapshot.getKey()).child(personalBoardList.get(position));
+                                    dataSnapshot = snapshot.child(personalBoardList.get(position));
                                     boardExists = true;
                                     break;
                                 }
