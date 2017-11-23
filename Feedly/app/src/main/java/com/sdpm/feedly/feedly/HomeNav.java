@@ -30,6 +30,7 @@ import android.widget.CheckedTextView;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,7 +77,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     List<String> personalCategoriesList;
     HashMap<String, List<Feed>> personalFeedsUnderCategory;
     private DrawerLayout drawer;
-    private  NavigationView navView;
+    private NavigationView navView;
+    private NavigationView searchView;
 
     private Button logoutBtn;
     private Button editFeedContentBtn;
@@ -125,6 +127,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
+        setSearchDrawer();
 
         database = FirebaseDatabase.getInstance().getReference();
 
@@ -314,6 +317,19 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         });
     }
 
+
+    /**
+     * Initializes and sets the Search drawer components
+     *
+     */
+    private void setSearchDrawer() {
+        drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
+        searchView = (NavigationView) drawer.findViewById(R.id.search_view);
+
+        ScrollView view = (ScrollView) getLayoutInflater().inflate(R.layout.search_side_layout, null);
+
+        searchView.addView(view);
+    }
 
     /**
      * Initializes and sets the Navigation drawer components
