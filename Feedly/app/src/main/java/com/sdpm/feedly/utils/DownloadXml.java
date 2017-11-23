@@ -33,6 +33,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     public static final String EXPLORE_FEEDS="EXPLORE";
     public static final String TODAY = "T0DAY";
     public static final String READLATER = "Read Later";
+    public static final String PERSONALBOARD = "Personal Board";
 
     private RecyclerView recyclerView;
     private String action;
@@ -104,6 +105,11 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
         recyclerView.setAdapter(theAdapter);
     }
 
+    private void displayPersonalBoard(Feed theFeed){
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        recyclerView.setAdapter(theAdapter);
+    }
+
     /**
      * Async task overrriden method which is called after the doInBackground() is completed.
      * This method checks the action to be performed, which is set while instantiating this class.
@@ -126,6 +132,9 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
                 break;
             case DownloadXml.READLATER:
                     displayReadLaterFeeds(theFeed);
+                break;
+            case DownloadXml.PERSONALBOARD:
+                displayPersonalBoard(theFeed);
                 break;
 
             default:
