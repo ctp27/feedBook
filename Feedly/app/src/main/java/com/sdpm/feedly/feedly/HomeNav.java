@@ -3,7 +3,6 @@ package com.sdpm.feedly.feedly;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -38,7 +37,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.sdpm.feedly.utils.DownloadXml;
+import com.sdpm.feedly.adapters.CheckboxExpandableListAdapter;
+import com.sdpm.feedly.adapters.ExpandableListAdapter;
+import com.sdpm.feedly.bgtasks.DownloadXml;
+import com.sdpm.feedly.utils.TempStores;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -557,7 +559,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_FEED = "FEED";
+        private static final String KEY = "FEED";
         private Feed feed;
         private RecyclerView rv;
         private LinearLayoutManager llm;
@@ -575,7 +577,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         public static PlaceholderFragment newInstance(Feed feed) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
-            args.putSerializable(ARG_FEED,feed);
+            int thisKey = feed.getName().hashCode();
+            args.putInt(KEY,thisKey);
+            TempStores.setFeed(thisKey,feed);
+//            args.putSerializable(ARG_FEED,feed);
             fragment.setArguments(args);
             return fragment;
         }
@@ -584,7 +589,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_home_nav, container, false);
-            feed = (Feed) getArguments().getSerializable(ARG_FEED);
+            int key=getArguments().getInt(KEY);
+//            feed = (Feed) getArguments().getSerializable(ARG_FEED);
+            feed = TempStores.retrieveFeed(key);
+
             if (feed != null) {
                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
                 todays.setVisibility(View.INVISIBLE);
@@ -647,13 +655,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             return null;
         }
 
-        @Override
-        public Parcelable saveState() {
-            Bundle bundle = (Bundle) super.saveState();
-            if(bundle!=null)
-                bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
-            return bundle;
-        }
+
     }
 
 

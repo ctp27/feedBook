@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 public class Feed implements Serializable {
 
+    String id;
     String name;
     String category;
     String description;

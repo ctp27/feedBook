@@ -1,11 +1,12 @@
-package com.sdpm.feedly.utils;
+package com.sdpm.feedly.bgtasks;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
-import com.sdpm.feedly.feedly.RVAdapter;
+import com.sdpm.feedly.adapters.RVAdapter;
+import com.sdpm.feedly.utils.XmlParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;

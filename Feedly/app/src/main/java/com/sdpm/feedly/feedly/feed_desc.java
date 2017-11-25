@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -128,7 +127,7 @@ public class feed_desc extends AppCompatActivity {
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_ARTICLE = "ARTICLE";
+        private static final String KEY = "KEY";
         private static final String ARG_CATEGORY = "CATEGORY";
         Article a;
         TextView articleTitle;
@@ -151,10 +150,13 @@ public class feed_desc extends AppCompatActivity {
 
             Bundle args = new Bundle();
             if(article != null) {
-                args.putSerializable(ARG_ARTICLE, article);
-                args.putSerializable(ARG_CATEGORY,Category);
+                    int key = article.getTitle().hashCode();
+                    args.putInt(KEY,key);
+                    TempStores.setArticle(key,article);
+                    args.putString(ARG_CATEGORY,Category);
+
             } else {
-                args.putString(ARG_ARTICLE, null);
+                args.putString(null, null);
             }
             fragment.setArguments(args);
             return fragment;
@@ -166,8 +168,9 @@ public class feed_desc extends AppCompatActivity {
 
             Spanned spanned;
             rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
-            a = (Article) getArguments().getSerializable(ARG_ARTICLE);
-            String theCategory = (String) getArguments().getSerializable(ARG_CATEGORY);
+            int theKey = getArguments().getInt(KEY);
+            a = TempStores.getArticle(theKey);
+            String theCategory = getArguments().getString(ARG_CATEGORY);
 
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
@@ -314,21 +317,24 @@ public class feed_desc extends AppCompatActivity {
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 if (bitmap != null) {
-                    BitmapDrawable d = new BitmapDrawable(getContext().getResources(),bitmap);
+                    BitmapDrawable d = new BitmapDrawable(getContext().getResources(), bitmap);
                     int height = bitmap.getHeight();
                     mDrawable.addLevel(1, 1, d);
-                    if(bitmap.getHeight() < getView().getWidth()) {
-                        height = getView().getWidth();
+                    View thisView = getView();
+                    if (thisView != null) {
+                        if (bitmap.getHeight() < thisView.getWidth()) {
+                            height = thisView.getWidth();
+                        }
+                        mDrawable.setBounds(0, 0, thisView.getWidth(), height);
+                        mDrawable.setLevel(1);
+                        CharSequence t = articleDesc.getText();
+                        articleDesc.setText(t);
+                    } else {
+                        mDrawable.setBounds(0, 0, 0, 0);
+                        mDrawable.setLevel(1);
+                        CharSequence t = articleDesc.getText();
+                        articleDesc.setText(t);
                     }
-                    mDrawable.setBounds(0, 0, getView().getWidth(), height);
-                    mDrawable.setLevel(1);
-                    CharSequence t = articleDesc.getText();
-                    articleDesc.setText(t);
-                }else {
-                    mDrawable.setBounds(0, 0, 0, 0);
-                    mDrawable.setLevel(1);
-                    CharSequence t = articleDesc.getText();
-                    articleDesc.setText(t);
                 }
             }
         }
@@ -371,13 +377,7 @@ public class feed_desc extends AppCompatActivity {
             return null;
         }
 
-        @Override
-        public Parcelable saveState() {
-            Bundle bundle = (Bundle) super.saveState();
-            if(bundle!=null)
-            bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
-            return bundle;
-        }
+
     }
 
 }

@@ -1,4 +1,4 @@
-package com.sdpm.feedly.feedly;
+package com.sdpm.feedly.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sdpm.feedly.feedly.R;
 import com.sdpm.feedly.utils.HtmlParseUtils;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
