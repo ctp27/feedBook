@@ -36,6 +36,7 @@ dependencies {
     compile 'org.jsoup:jsoup:1.10.3'
     compile 'com.android.support:support-v13:25.0.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.github.clans:fab:1.6.2'
     testCompile 'junit:junit:4.12'
 }
 apply plugin: 'com.google.gms.google-services'

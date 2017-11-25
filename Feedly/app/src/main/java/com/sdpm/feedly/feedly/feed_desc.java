@@ -1,6 +1,7 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -10,34 +11,56 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.os.Parcelable;
+import android.provider.ContactsContract;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
+
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,10 +68,14 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import model.Article;
+import model.Feed;
 
-public class feed_desc extends AppCompatActivity {
+public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageChangeListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -65,34 +92,288 @@ public class feed_desc extends AppCompatActivity {
      */
     private ViewPager mViewPager;
     ArrayList<Article> articles;
+    Article articleOnScreen;
     private String category;
+    static String email;
+    ArrayList<String> personalBoardList;
+    static String personalBoardName = null;
+    ArrayAdapter<String> arrayAdapterPersonalBoard;
+    private static DrawerLayout drawer;
+    private static NavigationView navView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_feed_desc);
+        setContentView(R.layout.side_nav_feed_desc);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
 
+        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        email = userDetails.getString("email", "");
+
+        setSideNavBar();
+        populatePersonalBoardList();
+
 //        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
         articles = (ArrayList<Article>)TempStores.getTheFeeds();
         category = getIntent().getExtras().getString("category");
         getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
+        articleOnScreen = articles.get(position);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),articles);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.addOnPageChangeListener(this);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setCurrentItem(position);
 
         int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
         //mViewPager.setOffscreenPageLimit(limit);
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        if(articles!=null && position < articles.size()) {
+            articleOnScreen = articles.get(position);
+        } else {
+            articleOnScreen = null;
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
+    private void setSideNavBar(){
+        final Button createBoardBtn, personalBoardDoneBtn;
+        final EditText personalBoardNameEditTxt;
+        ListView lvPersonalBoard;
+        LinearLayout layout;
+
+        drawer = (DrawerLayout) findViewById(R.id.side_nav_feed_desc_drawer_layout);
+        navView = (NavigationView) drawer.findViewById(R.id.feed_desc_nav_view);
+        layout = (LinearLayout) getLayoutInflater().inflate(R.layout.feed_desc_nav, null);
+        navView.addView(layout);
+
+        personalBoardDoneBtn = (Button) findViewById(R.id.create_board_done_button);
+        personalBoardNameEditTxt = (EditText) findViewById(R.id.create_board_edit_text);
+        createBoardBtn = (Button) findViewById(R.id.create_board_button);
+        lvPersonalBoard = (ListView) findViewById(R.id.personal_board_list_view);
+        personalBoardList = new ArrayList<String>();
+
+        arrayAdapterPersonalBoard = new ArrayAdapter<String>(
+                this, android.R.layout.simple_list_item_1, personalBoardList);
+
+        lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
+
+        lvPersonalBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    final int position, long id) {
+                //check article is not already in board
+                // if yes call addArticleInPersonalBoard Function
+                final DatabaseReference database;
+                database = FirebaseDatabase.getInstance().getReference();
+
+                database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Boolean articleAlreadyExisitsInBoard = false;
+                        DatabaseReference personalBoardDBRef = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.hasChild(email.split("@")[0])){
+                                dataSnapshot = snapshot.child(email.split("@")[0]);
+                                personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                                break;
+                            }
+                        }
+                        if(personalBoardDBRef  != null) {
+                            Boolean boardExists = false;
+                            for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if(snapshot.child(personalBoardList.get(position)).exists()) {
+                                    dataSnapshot = snapshot.child(personalBoardList.get(position));
+                                    boardExists = true;
+                                    break;
+                                }
+                            }
+                            if(boardExists) {
+                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                    if(snapshot.child("link").getValue().toString().equals(articleOnScreen.getLink())){
+                                        articleAlreadyExisitsInBoard = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if(articleAlreadyExisitsInBoard) {
+                            Toast.makeText(getApplicationContext(), "Article already exists in board " + personalBoardList.get(position), Toast.LENGTH_LONG).show();
+                        } else {
+                            addArticleInPersonalBoard(articleOnScreen,  personalBoardList.get(position));
+                            drawer.closeDrawer(Gravity.START);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Login DbError Msg ->", d.getMessage());
+                        Log.d("Login DbError Detail ->", d.getDetails());
+                    }
+                });
+            }
+        });
+
+        createBoardBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                personalBoardName = null;
+                personalBoardNameEditTxt.setVisibility(View.VISIBLE);
+                personalBoardNameEditTxt.setText("");
+                personalBoardDoneBtn.setVisibility(View.VISIBLE);
+                createBoardBtn.setVisibility(View.GONE);
+            }
+        });
+
+        personalBoardDoneBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                personalBoardName = personalBoardNameEditTxt.getText().toString();
+                if(!personalBoardName.equals("")) {
+                    if(personalBoardList.contains(personalBoardName)) {
+                        Toast.makeText(getApplicationContext(),"Personal Board Name " + personalBoardName +" already exists",Toast.LENGTH_LONG).show();
+                        personalBoardName = "";
+                    } else { //add in db with selected article and close nav bar
+                        personalBoardDoneBtn.setVisibility(View.GONE);
+                        personalBoardNameEditTxt.setVisibility(View.GONE);
+                        createBoardBtn.setVisibility(View.VISIBLE);
+                        personalBoardList.add(personalBoardName);
+                        arrayAdapterPersonalBoard.notifyDataSetChanged();
+                        addArticleInPersonalBoard(articleOnScreen, personalBoardName);
+                        drawer.closeDrawer(Gravity.START);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Fetch board names from db and notify adapter
+     */
+    private void populatePersonalBoardList() {
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference personalBoardDBRef = null;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                        break;
+                    }
+                }
+
+                if(personalBoardDBRef  != null) {
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for(DataSnapshot subsnapshot : snapshot.getChildren()) {
+                            personalBoardList.add(subsnapshot.getKey().toString());
+                        }
+                    }
+                } else {
+                    personalBoardList.add("My Board");
+                }
+                arrayAdapterPersonalBoard.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+    }
+
+    /**
+     * is article already in the board will be handled before calling this function
+     **/
+    private void addArticleInPersonalBoard(final Article article, final String boardName) {
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference personalBoardDBRef = null;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                        break;
+                    }
+                }
+                Map personalBoardArticle = new HashMap();
+                personalBoardArticle.put("author", article.getAuthor());
+                personalBoardArticle.put("description", article.getDescription());
+                personalBoardArticle.put("link", article.getLink());
+                personalBoardArticle.put("publishedDate", article.getPublishedDate());
+                personalBoardArticle.put("thumbnailLink", article.getThumbnailLink());
+                personalBoardArticle.put("title", article.getTitle());
+                if(personalBoardDBRef  == null) {
+                    Map personalBoardArticleKey = new HashMap();
+                    personalBoardArticleKey.put("1",personalBoardArticle);
+
+                    Map personalBoard = new HashMap();
+                    personalBoard.put(boardName, personalBoardArticleKey);
+
+                    Map personalBoardKey = new HashMap();
+                    personalBoardKey.put("1", personalBoard);
+
+                    Map myPersonalBoard = new HashMap();
+                    myPersonalBoard.put(email.split("@")[0],personalBoardKey);
+
+                    database.child("PersonalBoard").push().setValue(myPersonalBoard);
+                } else {
+                    Boolean boardExists = false;
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.child(boardName).exists()){
+                            boardExists = true;
+                            personalBoardDBRef = personalBoardDBRef.child(snapshot.getKey()).child(boardName);
+                            break;
+                        }
+                    }
+                    if(boardExists) {
+                        personalBoardDBRef.push().setValue(personalBoardArticle);
+                    } else {
+                        Map personalBoardArticleKey = new HashMap();
+                        personalBoardArticleKey.put("1",personalBoardArticle);
+
+                        Map personalBoard = new HashMap();
+                        personalBoard.put(boardName, personalBoardArticleKey);
+
+                        personalBoardDBRef.push().setValue(personalBoard);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
     }
 
     @Override
@@ -135,7 +416,11 @@ public class feed_desc extends AppCompatActivity {
         ImageView articleImg;
         Button linkButton;
         TextView articleInfo;
-        FloatingActionButton btnShareOnFB;
+        FloatingActionMenu materialDesignFAM;
+        FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
+
+        RatingBar ratBar;
+
         View rootView;
         public PlaceholderFragment() {
 
@@ -176,12 +461,32 @@ public class feed_desc extends AppCompatActivity {
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
             articleImg = (ImageView) rootView.findViewById(R.id.article_photo);
             articleDesc = (TextView) rootView.findViewById(R.id.article_desc);
-            btnShareOnFB = (FloatingActionButton) rootView.findViewById(R.id.fab);
+            materialDesignFAM = (FloatingActionMenu) rootView.findViewById(R.id.material_design_android_floating_action_menu);
+            floatingActionButtonShare = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_fb_share);
+            floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
+            floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
+
+            ratBar = (RatingBar) rootView.findViewById(R.id.rat);
+            // Go to database and find already set rating value, if that isn't present set values as 0
+            ratBar.setRating(Float.parseFloat("1.0"));
+
+            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+
+                    String rating = String.valueOf(v);
+
+                    // Insert rating value of article with email and article title to the database below
+                    Toast.makeText(getActivity().getApplicationContext(), rating, Toast.LENGTH_SHORT).show();
+
+                }
+            });
+
 
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {
-                    btnShareOnFB.setOnClickListener(new View.OnClickListener() {
+                    floatingActionButtonShare.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             shareOnFB(a.getLink());
@@ -194,9 +499,28 @@ public class feed_desc extends AppCompatActivity {
                         }
                     });
                 } else {
-                    btnShareOnFB.setVisibility(View.GONE);
+                    floatingActionButtonShare.setVisibility(View.GONE);
                     linkButton.setVisibility(View.GONE);
                 }
+
+                if(!email.equals("")) {
+                    floatingActionButtonReadLater.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            saveInReadLater(a);
+                        }
+                    });
+                    floatingActionButtonPersonalBoard.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            addToPersonalBoard(a);
+                        }
+                    });
+                } else {
+                    floatingActionButtonReadLater.setVisibility(View.GONE);
+                    floatingActionButtonPersonalBoard.setVisibility(View.GONE);
+                }
+
                 articleTitle.setText(a.getTitle());
                 if(a.getThumbnailLink()!=null){
                     Picasso.with(getContext()).load(a.getThumbnailLink()).error(R.drawable.feed)
@@ -262,7 +586,6 @@ public class feed_desc extends AppCompatActivity {
                 articleDesc.setText(strBuilder);
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
-
             return rootView;
         }
 
@@ -280,6 +603,66 @@ public class feed_desc extends AppCompatActivity {
             strBuilder.removeSpan(span);
         }
 
+        private  void addToPersonalBoard(final Article a) {
+
+            drawer.openDrawer(Gravity.START);
+
+        }
+
+        private void saveInReadLater(final Article a){
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("ReadLater").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DatabaseReference readLaterDBRef = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.hasChild(email.split("@")[0])){
+                            dataSnapshot = snapshot.child(email.split("@")[0]);
+                            readLaterDBRef = database.child("ReadLater").child(snapshot.getKey()).child(email.split("@")[0]);
+                            break;
+                        }
+                    }
+                    Map ReadLaterArticle = new HashMap();
+                    ReadLaterArticle.put("author", a.getAuthor());
+                    ReadLaterArticle.put("description", a.getDescription());
+                    ReadLaterArticle.put("link", a.getLink());
+                    ReadLaterArticle.put("publishedDate", a.getPublishedDate());
+                    ReadLaterArticle.put("thumbnailLink", a.getThumbnailLink());
+                    ReadLaterArticle.put("title", a.getTitle());
+                    if(readLaterDBRef == null) {
+                        Map readLaterKey = new HashMap();
+                        readLaterKey.put("1",ReadLaterArticle);
+
+                        Map myReadLater = new HashMap();
+                        myReadLater.put(email.split("@")[0],readLaterKey);
+
+                        database.child("ReadLater").push().setValue(myReadLater);
+                    } else {
+                        Boolean articleAlreadyAdded = false;
+                        for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if(snapshot.child("link").getValue().toString().equals(a.getLink())){
+                                articleAlreadyAdded = true;
+                                break;
+                            }
+                        }
+                        if(!articleAlreadyAdded) {
+                            readLaterDBRef.push().setValue(ReadLaterArticle);
+                        } else {
+                            Toast.makeText(getContext(),"Article Already added in Personal Board",Toast.LENGTH_LONG);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+
+        }
         private void shareOnFB(String url){
             ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(Uri.parse(url)).build();
             ShareDialog.show(this, content);
@@ -344,7 +727,7 @@ public class feed_desc extends AppCompatActivity {
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         ArrayList<Article> articlesList;
 
@@ -361,6 +744,11 @@ public class feed_desc extends AppCompatActivity {
                 return PlaceholderFragment.newInstance(articlesList.get(position),category);
             }
             return PlaceholderFragment.newInstance(null,null);
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
         }
 
         @Override

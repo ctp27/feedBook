@@ -18,12 +18,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ExpandableListView;
@@ -45,6 +47,7 @@ import com.sdpm.feedly.utils.TempStores;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.Article;
 import model.Feed;
@@ -78,6 +81,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     HashMap<String, List<Feed>> personalFeedsUnderCategory;
     private DrawerLayout drawer;
     private  NavigationView navView;
+    private ArrayList<String> personalBoardList;
+    private ArrayAdapter<String> arrayAdapterPersonalBoard;
+    private ListView lvPersonalBoard;
 
     private Button logoutBtn;
     private Button editFeedContentBtn;
@@ -154,6 +160,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         if(resumeFromSearch) {
             createExpandableListOfPersonalFeeds();
             resumeFromSearch = false;
+        } else if(theFeeds != null){
+            createListOfPersonalBoard();
         }
 
     }
@@ -288,7 +296,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                     defaultFeed = TODAYS_FEED;
                                 }
                                 else {
-                                    prepareData();
+                                    prepareData(); ////why need this call ???? -----------------
                                     defaultFeed = EXPLORE_FEED;
                                 }
                             }
@@ -340,7 +348,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     case 0: displayPersonalFeeds();
                             defaultFeed =TODAYS_FEED;
                             break;
-                    case 1: Toast.makeText(HomeNav.this,"Coming soon!",Toast.LENGTH_LONG).show();
+                    case 1: // Read Later
+                        displayReadLaterArticle();
                         break;
                     case 2: //explore
                         if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
@@ -389,6 +398,64 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
             }
         });
+
+
+        lvPersonalBoard = (ListView) findViewById(R.id.personal_board_list_view);
+        lvPersonalBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    final int position, long id) {
+
+                database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        DatabaseReference personalBoardDBRef = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (snapshot.hasChild(email.split("@")[0])) {
+                                dataSnapshot = snapshot.child(email.split("@")[0]);
+                                personalBoardDBRef = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                                break;
+                            }
+                        }
+                        if (personalBoardDBRef != null) {
+                            Boolean boardExists = false;
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                if (snapshot.child(personalBoardList.get(position)).exists()) {
+                                    dataSnapshot = snapshot.child(personalBoardList.get(position));
+                                    boardExists = true;
+                                    break;
+                                }
+                            }
+                            if (boardExists) {
+                                ArrayList<Article> personalBoardArticleList = new ArrayList<Article>();
+                                ArrayList<Feed> personalBoardFeedList = new ArrayList<Feed>();
+                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                    Article a = snapshot.getValue(Article.class);
+                                    personalBoardArticleList.add(a);
+                                }
+                                personalBoardFeedList.add(new Feed("", DownloadXml.PERSONALBOARD, "", null, personalBoardArticleList));
+                                theFeeds = personalBoardFeedList;
+
+                                if (mSectionsPagerAdapter != null) {
+                                    mSectionsPagerAdapter.notifyDataSetChanged();
+                                } else {
+                                    LoadDataOnScreen();
+                                }
+                                getSupportActionBar().setTitle(personalBoardList.get(position));
+                            }
+                        }else if(personalBoardList.get(position).equals("My Board")) {
+                            Toast.makeText(getApplicationContext(),"No Article stored in personal board", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Login DbError Msg ->", d.getMessage());
+                        Log.d("Login DbError Detail ->", d.getDetails());
+                    }
+                });
+            }
+        });
     }
 
     public void  prepareData(){
@@ -406,6 +473,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     LoadDataOnScreen();
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
+                        createListOfPersonalBoard();
                     }
                 }
             }
@@ -416,6 +484,47 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 Log.d("Login DbError Detail ->", d.getDetails());
             }
         });
+    }
+
+    public void displayReadLaterArticle(){
+        database.child("ReadLater").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean hasReadLater = false;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        hasReadLater = true;
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        break;
+                    }
+                }
+
+                if(hasReadLater) {
+                    ArrayList<Feed> readLaterFeedList = new ArrayList<>();
+                    ArrayList<Article> readLaterArticleList = new ArrayList<>();
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        Article a = snapshot.getValue(Article.class);
+                        readLaterArticleList.add(a);
+                    }
+                    readLaterFeedList.add(new Feed("",DownloadXml.READLATER,"",null,readLaterArticleList));
+                    theFeeds = readLaterFeedList;
+
+                    if(mSectionsPagerAdapter != null){
+                        mSectionsPagerAdapter.notifyDataSetChanged();
+                    } else {
+                        LoadDataOnScreen();
+                    }
+                    getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+
     }
 
     public void LoadDataOnScreen(){
@@ -501,8 +610,49 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 Log.d("Login DbError Detail ->", d.getDetails());
             }
         });
+    }
 
+    public void createListOfPersonalBoard() {
+        if(personalBoardList != null) {
+            personalBoardList.clear();
+        }else {
+            personalBoardList = new ArrayList<String>();
+        }
+        database.child("PersonalBoard").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference personalBoardDBRef = null;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.hasChild(email.split("@")[0])){
+                        dataSnapshot = snapshot.child(email.split("@")[0]);
+                        personalBoardDBRef  = database.child("PersonalBoard").child(snapshot.getKey()).child(email.split("@")[0]);
+                        break;
+                    }
+                }
 
+                if(personalBoardDBRef  != null) {
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for(DataSnapshot subsnapshot : snapshot.getChildren()) {
+                            personalBoardList.add(subsnapshot.getKey().toString());
+                        }
+                    }
+                } else {
+                    personalBoardList.add("My Board");
+                }
+                if(arrayAdapterPersonalBoard != null) {
+                    arrayAdapterPersonalBoard.notifyDataSetChanged();
+                } else {
+                    arrayAdapterPersonalBoard = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, personalBoardList);
+                    lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -611,7 +761,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
 
         private void displayFeed(){
-            DownloadXml downloadXml = new DownloadXml(getContext(),rv,DownloadXml.EXPLORE_FEEDS);
+            DownloadXml downloadXml;
+            if(DownloadXml.READLATER.equals(feed.getCategory())) {
+                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.READLATER);
+            } else if(DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
+                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.PERSONALBOARD);
+            } else {
+                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.EXPLORE_FEEDS);
+            }
             downloadXml.execute(feed);
             feedCachedUrl = feed.getLink();
         }

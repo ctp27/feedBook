@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.sdpm.feedly.feedly.UserInterestsActivity">
+
+
+    <CheckBox
+        android:id="@+id/cb_cooking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/img_cooking"
+        android:layout_marginTop="30dp"
+        android:layout_toStartOf="@+id/img_culture"
+        android:text="Cooking" />
+
+    <CheckBox
+        android:id="@+id/cb_film"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/img_film"
+        android:layout_marginTop="30dp"
+        android:layout_toEndOf="@+id/img_film"
+        android:text="Film" />
+
+    <CheckBox
+        android:id="@+id/cb_gaming"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/img_gaming"
+        android:layout_marginTop="30dp"
+        android:layout_toEndOf="@+id/img_gaming"
+        android:text="Gaming" />
+
+    <CheckBox
+        android:id="@+id/cb_science"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/img_science"
+        android:layout_marginTop="30dp"
+        android:layout_toEndOf="@+id/img_science"
+        android:text="Science" />
+
+    <Button
+        android:id="@+id/b_select_interests"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="15dp"
+        android:text="Submit Interests" />
+
+    <ImageView
+        android:id="@+id/img_cooking"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="34dp"
+        app:srcCompat="@drawable/cooking" />
+
+    <ImageView
+        android:id="@+id/img_film"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignStart="@+id/img_cooking"
+        android:layout_below="@+id/img_cooking"
+        app:srcCompat="@drawable/film" />
+
+    <ImageView
+        android:id="@+id/img_gaming"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignStart="@+id/img_film"
+        android:layout_below="@+id/img_film"
+        app:srcCompat="@drawable/gaming" />
+
+    <ImageView
+        android:id="@+id/img_science"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignStart="@+id/img_gaming"
+        android:layout_below="@+id/img_gaming"
+        app:srcCompat="@drawable/science" />
+
+    <ImageView
+        android:id="@+id/img_marketing"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_below="@+id/img_gaming"
+        android:layout_toEndOf="@+id/cb_science"
+        app:srcCompat="@drawable/marketing" />
+
+    <ImageView
+        android:id="@+id/img_culture"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_above="@+id/img_marketing"
+        android:layout_alignStart="@+id/img_news"
+        app:srcCompat="@drawable/culture" />
+
+    <ImageView
+        android:id="@+id/img_tech"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_above="@+id/img_culture"
+        android:layout_alignStart="@+id/img_news"
+        app:srcCompat="@drawable/tech" />
+
+    <ImageView
+        android:id="@+id/img_news"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_above="@+id/img_tech"
+        android:layout_toEndOf="@+id/cb_science"
+        app:srcCompat="@drawable/news" />
+
+    <CheckBox
+        android:id="@+id/cb_news"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/cb_cooking"
+        android:layout_toEndOf="@+id/img_culture"
+        android:text="News" />
+
+    <CheckBox
+        android:id="@+id/cb_tech"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/cb_film"
+        android:layout_toEndOf="@+id/img_news"
+        android:text="Tech" />
+
+    <CheckBox
+        android:id="@+id/cb_culture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/cb_gaming"
+        android:layout_toEndOf="@+id/img_culture"
+        android:text="Culture" />
+
+    <CheckBox
+        android:id="@+id/cb_marketing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/cb_science"
+        android:layout_toEndOf="@+id/img_marketing"
+        android:text="Marketing" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="25dp"
+        android:textAlignment="center"
+        android:text="Please select your interests" />
+
+</RelativeLayout>
