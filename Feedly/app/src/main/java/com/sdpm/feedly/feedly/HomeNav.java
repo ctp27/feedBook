@@ -36,6 +36,7 @@ import android.widget.CheckedTextView;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -103,6 +104,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button addSourceBtn;
     private Toolbar toolbar;
     private TextView todaysDefaultText;
+    private ProgressBar mainProgressBar;
 
     private LinearLayout navDrawerLayout;
     private LinearLayout editContentLayout;
@@ -167,7 +169,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
     private void getLocationDetails()throws SecurityException{
-
+        showMainProgressBar();
         Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
         locationListener = new FeedlyLocationListener(this,lastKnownLocation,this);
@@ -176,31 +178,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         Log.d(TAG,"Executed locationdetails");
     }
 
-    /**
-     *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
-        switch(requestCode){
-            case MY_PERMISSIONS_REQUEST_FINE_LOCATION:
-                if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission has been granted. Start location search task.
-                    getLocationDetails();
-                    Log.d(TAG,"calledLocationDetails");
-                } else {
-                    // Permission request was denied.
-                    Toast.makeText(this,"Permission was denied",Toast.LENGTH_LONG).show();
-                }
-                break;
-                default:
-                    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-
-    }
 
 
     /**
@@ -225,11 +202,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
 
     /**
-     * This method is called when the DownloadNewsTask completes execution. It provides
-     * the List of populated news feeds of the area the user is in as a parameter.
+     * This method is called when the DownloadNewsTask completes execution in the background.
+     * It provides the List of populated news feeds of the city the user is in, as a parameter.
      * The list is then used to display the pager adapter. Any task requiring the news feed should
-     * be called in this method. The list is null if there is no news in the area or if no internet
-     * connection.
+     * be called in this method. The article list is empty if there is no news in the area or
+     * if no internet connection.
      * @param localNewsFeed A list containing news feed of the current location
      */
     @Override
@@ -245,8 +222,41 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         /*  News present! display it! */
             theFeeds = (ArrayList<Feed>) localNewsFeed;
             LoadDataOnScreen();
+            hideMainProgressBar();
         }
     }
+
+
+    /**
+     * This method is called after a permission is requested to the user (> API 23). It provides the
+     * result of the requested permissions (in this case, GPS). If the permission is granted,
+     * the appropriate function requiring the resource should be called here after checking if the
+     * permission was granted. The method provides the necessary parameters for checking if
+     * permission was granted.
+     *
+     * @param requestCode The request code set while requesting the permission.
+     * @param permissions An array containing the permissions
+     * @param grantResults  The results array containing the results of the granted permissions
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        switch(requestCode){
+            case MY_PERMISSIONS_REQUEST_FINE_LOCATION:
+                if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Yay! Permission has been granted. Start location search task.
+                    getLocationDetails();
+                } else {
+                    // Permission request was denied. No news for you!
+                    Toast.makeText(this,"Permission was denied",Toast.LENGTH_LONG).show();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+    }
+
 
     /**
      * This method is called whenever the activity is resumed from the stack. For example, when
@@ -291,6 +301,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     private void initializeObjects(){
 
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mainProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
         todaysDefaultText = (TextView) findViewById(R.id.todays_default_text);
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
         editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
@@ -638,7 +650,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
+
         mViewPager.addOnPageChangeListener(this);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
@@ -815,7 +827,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment
+                    implements DownloadXml.DownloadXmlListener{
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -823,6 +836,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private static final String KEY = "FEED";
         private Feed feed;
         private RecyclerView rv;
+        private ProgressBar recyclerProgressBar;
         private LinearLayoutManager llm;
         String feedCachedUrl = "";
         TextView todays;
@@ -853,7 +867,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             int key=getArguments().getInt(KEY);
 //            feed = (Feed) getArguments().getSerializable(ARG_FEED);
             feed = TempStores.retrieveFeed(key);
-
+            recyclerProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_fragment);
             if (feed != null) {
                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
                 todays.setVisibility(View.INVISIBLE);
@@ -874,7 +888,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private void displayFeed() {
             /**
              * If the feed is a news feed, no need to call the DownloadXML since the news feed
-             * is already downloaded and parsed by the DownloadNewsTask.
+             * is already downloaded and parsed by the DownloadNewsTask. Set the adapter with
+             * the feed.
              */
             if (feed.isNewsFeed()) {
                 RVAdapter theAdapter = new RVAdapter(feed.getArticleList(), getContext(), feed.getCategory());
@@ -882,19 +897,39 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
             else {
                 /**
-                 * Its an XML feed, need to download and populate
+                 * Its an XML feed, need to download and populate as usual..
                  */
                 DownloadXml downloadXml;
                 if (DownloadXml.READLATER.equals(feed.getCategory())) {
-                    downloadXml = new DownloadXml(getContext(), rv, DownloadXml.READLATER);
+                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.READLATER);
                 } else if (DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
-                    downloadXml = new DownloadXml(getContext(), rv, DownloadXml.PERSONALBOARD);
+                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.PERSONALBOARD);
                 } else {
-                    downloadXml = new DownloadXml(getContext(), rv, DownloadXml.EXPLORE_FEEDS);
+                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.EXPLORE_FEEDS);
                 }
                 downloadXml.execute(feed);
                 feedCachedUrl = feed.getLink();
             }
+        }
+
+        @Override
+        public void beforeDownloadTask() {
+            displayRecyclerProgressBar();
+        }
+
+        @Override
+        public void postTaskExecution() {
+             hideRecyclerProgressBar();
+        }
+
+        private void displayRecyclerProgressBar(){
+            rv.setVisibility(View.INVISIBLE);
+            recyclerProgressBar.setVisibility(View.VISIBLE);
+        }
+
+        private void hideRecyclerProgressBar(){
+            recyclerProgressBar.setVisibility(View.INVISIBLE);
+            rv.setVisibility(View.VISIBLE);
         }
     }
 
@@ -967,5 +1002,15 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private void hideTheEditContentDrawer(){
         editContentLayout.setVisibility(View.GONE);
         navDrawerLayout.setVisibility(View.VISIBLE);
+    }
+
+    private void showMainProgressBar(){
+        mainProgressBar.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+    }
+
+    private void hideMainProgressBar(){
+        mainProgressBar.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
     }
 }

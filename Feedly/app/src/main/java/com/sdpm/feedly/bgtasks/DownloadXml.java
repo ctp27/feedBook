@@ -33,6 +33,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     private RecyclerView recyclerView;
     private String action;
     private Context context;
+    private DownloadXmlListener theListener;
     /**
      * The constructor takes in the recycler view and the action to be performed post download as
      * parameters. The recycler view is used to update the view. The action determines what
@@ -48,6 +49,19 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
         this.context=context;
         this.action = action;
         this.recyclerView = recyclerView;
+    }
+
+    public DownloadXml(DownloadXmlListener theListener,Context context, RecyclerView recyclerView, String action){
+
+        this.context=context;
+        this.action = action;
+        this.recyclerView = recyclerView;
+        this.theListener = theListener;
+    }
+
+    public interface DownloadXmlListener{
+        void beforeDownloadTask();
+        void postTaskExecution();
     }
 
     /**
@@ -67,6 +81,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
             RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
             recyclerView.setAdapter(theAdapter);
+            theListener.postTaskExecution();
 
     }
 
@@ -98,11 +113,13 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     private void displayReadLaterFeeds(Feed theFeed){
         RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
+        theListener.postTaskExecution();
     }
 
     private void displayPersonalBoard(Feed theFeed){
         RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
+        theListener.postTaskExecution();
     }
 
     /**
@@ -160,10 +177,9 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
         return theFeed;
     }
 
-
-
-
-
-
+    @Override
+    protected void onPreExecute() {
+        theListener.beforeDownloadTask();
+    }
 }
 
