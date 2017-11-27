@@ -13,11 +13,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.sdpm.feedly.feedly.R;
+import com.sdpm.feedly.model.Feed;
 
 import java.util.HashMap;
 import java.util.List;
-
-import model.Feed;
 
 public class ExpandableListAdapter extends BaseExpandableListAdapter {
 

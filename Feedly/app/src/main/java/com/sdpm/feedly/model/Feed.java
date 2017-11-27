@@ -1,4 +1,4 @@
-package model;
+package com.sdpm.feedly.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,13 +9,14 @@ import java.util.ArrayList;
 
 public class Feed implements Serializable {
 
-    String id;
-    String name;
-    String category;
-    String description;
-    String link;
-    String theXml;
-    ArrayList<Article> articleList;
+    private String id;
+    private String name;
+    private String category;
+    private String description;
+    private String link;
+    private String theXml;
+    private ArrayList<Article> articleList;
+    private boolean isNewsFeed;
 
     public Feed(String name, String category, String description, String link, ArrayList<Article> articleList) {
         this.name = name;
@@ -23,6 +24,7 @@ public class Feed implements Serializable {
         this.description = description;
         this.link = link;
         this.articleList = articleList;
+        isNewsFeed = false;
     }
 
     public Feed(){}
@@ -73,5 +75,13 @@ public class Feed implements Serializable {
 
     public void setTheXml(String theXml) {
         this.theXml = theXml;
+    }
+
+    public boolean isNewsFeed() {
+        return isNewsFeed;
+    }
+
+    public void setNewsFeed(boolean newsFeed) {
+        isNewsFeed = newsFeed;
     }
 }

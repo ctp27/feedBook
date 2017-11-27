@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import model.Feed;
+import com.sdpm.feedly.model.Feed;
 
 /**
  * Created by clinton on 11/8/17.

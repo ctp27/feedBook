@@ -1,5 +1,6 @@
 package com.sdpm.feedly.feedly;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -11,8 +12,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,7 +23,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -50,17 +48,17 @@ import android.widget.Toast;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
-
-import com.github.clans.fab.FloatingActionButton;
-import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -69,11 +67,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import model.Article;
-import model.Feed;
 
 public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageChangeListener {
 
@@ -699,8 +693,9 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
 
             @Override
             protected void onPostExecute(Bitmap bitmap) {
-                if (bitmap != null) {
-                    BitmapDrawable d = new BitmapDrawable(getContext().getResources(), bitmap);
+                Context thisContext = getContext();
+                if (bitmap != null && thisContext!=null) {
+                    BitmapDrawable d = new BitmapDrawable(thisContext.getResources(), bitmap);
                     int height = bitmap.getHeight();
                     mDrawable.addLevel(1, 1, d);
                     View thisView = getView();

@@ -5,8 +5,8 @@ import android.app.Application;
 import java.util.HashMap;
 import java.util.List;
 
-import model.Article;
-import model.Feed;
+import com.sdpm.feedly.model.Article;
+import com.sdpm.feedly.model.Feed;
 
 /**
  * Created by clinton on 11/8/17.

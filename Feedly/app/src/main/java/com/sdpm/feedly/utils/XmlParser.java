@@ -8,7 +8,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import java.io.StringReader;
 import java.util.ArrayList;
 
-import model.Article;
+import com.sdpm.feedly.model.Article;
 
 /**
  * Created by clinton on 10/8/17.

@@ -12,14 +12,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.sdpm.feedly.feedly.R;
+import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.utils.HtmlParseUtils;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-
-import model.Article;
 
 /**
  * Created by Junaid on 10/5/2017.
