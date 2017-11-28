@@ -535,9 +535,13 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                     theDate = "N/A";
                 }
                 articleInfo.setText(theCategory+"/"+author+"/"+ TimeDateUtils.getTimePassed(getContext(),theDate));
-
+                String description = a.getDescription();
                 if (Build.VERSION.SDK_INT >= 24) {
-                    spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
+
+                    if(description == null){
+                        description = "";
+                    }
+                    spanned = Html.fromHtml(description, Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
                             if(!source.startsWith("http")){
@@ -554,7 +558,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                         }
                     }, null);
                 } else {
-                    spanned = Html.fromHtml(a.getDescription(), new Html.ImageGetter() {
+                    spanned = Html.fromHtml(description, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
                             if(!source.startsWith("http")){

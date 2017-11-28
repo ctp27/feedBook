@@ -114,16 +114,20 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     private void setThePartialDescription(FeedViewHolder holder, int position) {
         String tempDesc = articles.get(position).getDescription();
-        if(HtmlParseUtils.containsHtml(tempDesc)){
+        if(tempDesc==null){
+            holder.feedDesc.setText("");
+
+        }else {
+            if (!tempDesc.isEmpty() && HtmlParseUtils.containsHtml(tempDesc)) {
 //             * If html then do this
-            holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
-        }
-        else {
-//             * If Not html then do this
-            if (tempDesc.length() <= 89) {
-                holder.feedDesc.setText(Html.fromHtml(tempDesc));
+                holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
             } else {
-                holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+//             * If Not html then do this
+                if (tempDesc.length() <= 89) {
+                    holder.feedDesc.setText(Html.fromHtml(tempDesc));
+                } else {
+                    holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+                }
             }
         }
     }
