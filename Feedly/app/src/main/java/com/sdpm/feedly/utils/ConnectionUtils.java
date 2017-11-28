@@ -31,7 +31,7 @@ public class ConnectionUtils {
     public static URL buildNewsUrlFromLocation(String location){
 
         Uri builtUri = Uri.parse(NEWS_API_BASE_URL).buildUpon()
-                .encodedQuery(QUERY_PARAM+"="+location)
+                .encodedQuery(QUERY_PARAM+"="+location+" "+"news")
                 .appendQueryParameter(API_KEY_PARAM,NEWSAPI_API_KEY)
                 .build();
 
