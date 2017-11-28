@@ -539,7 +539,10 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                 if(description == null){
                     description = "";
                 }
+
+
                 if (Build.VERSION.SDK_INT >= 24) {
+
                     spanned = Html.fromHtml(description, Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
