@@ -5,6 +5,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -20,36 +21,37 @@ import java.util.Map;
 
 public class FeedlyLocationListener implements LocationListener {
 
-
+    private static final String TAG = FeedlyLocationListener.class.getSimpleName();
     private static final int TWO_MINUTES = 1000 * 60 * 2;
-    private static final String TAG = "Booyah";
+
     private static  Map<String, String> states;
 
 
     private LocationChangedListener theListener;
-    private Location lastKnownLocation;
     private Context context;
+    private LocationManager locationManager;
 
 
     public interface LocationChangedListener {
         void onFoundCurrentLocation(String location);
     }
 
-    public FeedlyLocationListener(Context context,Location lastKnownLocation, LocationChangedListener theListener) {
+    public FeedlyLocationListener(Context context, LocationManager locationManager, LocationChangedListener theListener) {
         this.context = context;
         this.theListener = theListener;
-        this.lastKnownLocation = lastKnownLocation;
+        this.locationManager = locationManager;
         populateHashMap();
+
     }
 
     @Override
     public void onLocationChanged(Location location) {
         String address = null;
+        Location lastKnownLocation = getLastLocation();
         if(isBetterLocation(location,lastKnownLocation)){
 
             try {
                 address = getAddressFromLocation(location);
-                theListener.onFoundCurrentLocation(address);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -58,11 +60,13 @@ public class FeedlyLocationListener implements LocationListener {
         else{
             try {
                 address = getAddressFromLocation(lastKnownLocation);
-                theListener.onFoundCurrentLocation(address);
             } catch (IOException e) {
                 e.printStackTrace();
             }
             Log.d(TAG,"Not a better location");
+        }
+        if(address !=null) {
+            theListener.onFoundCurrentLocation(address);
         }
 
     }
@@ -163,6 +167,34 @@ public class FeedlyLocationListener implements LocationListener {
         return provider1.equals(provider2);
     }
 
+    private Location getLastLocation() throws SecurityException{
+        Location tempLastNetworkLocation=null;
+        Location tempLastGpsLocation=null;
+
+        tempLastNetworkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        tempLastGpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if(tempLastGpsLocation == null && tempLastNetworkLocation==null){
+            return  null;
+        }
+        else{
+            if(tempLastNetworkLocation==null){
+                return tempLastGpsLocation;
+            }
+            else if(tempLastGpsLocation == null){
+                return tempLastNetworkLocation;
+            }
+            else{
+                if(isBetterLocation(tempLastGpsLocation,tempLastGpsLocation)){
+                    return tempLastGpsLocation;
+                }
+                else {
+                    return tempLastNetworkLocation;
+                }
+            }
+        }
+    }
 
     private void populateHashMap(){
 

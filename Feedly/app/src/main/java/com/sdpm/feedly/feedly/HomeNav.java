@@ -1,12 +1,13 @@
 package com.sdpm.feedly.feedly;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -19,6 +20,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -154,34 +156,75 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
 
-
+    /**
+     * MAIN METHOD to call to DISPLAY LOCAL NEWS for the user's location. It starts
+     * the flow for getting the user location, downloading and parsing the news JSON data for
+     * the location and displaying it on the home screen.
+     *
+     * The flow is as follows:
+     * -    CHECK IF LOCATION PERMISSION EXISTS:
+     *      If permission exists, call getLocationDetails()
+     *      If permission doesn't exist, ask for permission. The result of the permission is called
+     *      in the onRequestPermissionsResult(), where getLocationDetails() is called if permission
+     *      granted.
+     * -    REQUEST USER LOCATION:
+     *      The getLocationDetails() method starts the request for the location. This starts searching
+     *      for the user's location in the background.
+     * -    QUERY NEWSAPI.ORG:
+     *      Once the user's location is found, the onFoundCurrentLocation() method is called.
+     *      The location is passed as a parameter. URL for querying NewsApi.org is generated and the
+     *      downloadNewsTask is called.
+     * -    DISPLAY NEWS FEED:
+     *      Once the News Feed is downloaded and parsed by the DownloadNewsTask, the onNewsDownloaded()
+     *      method is called and the downloaded feed is passed as a parameter.
+     *
+     *      TODO: @Daniel_Robaina: Call this method from the Navbar once you add the scrolling.
+     *      TODO:   Remove it from the menu item.
+     *
+     */
     private void displayNewsFeed() {
+        /*  Check if permission for location is granted*/
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            /*  Permission not granted, request permissions     */
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                     MY_PERMISSIONS_REQUEST_FINE_LOCATION);
 
         }else {
-            getLocationDetails();
+            /*  Permissions are granted. Check if GPS is on, if on, request location */
+            if(isLocationProvidersEnabled()) {
+                getLocationDetails();
+            }
         }
 
     }
 
+    /**
+     * Performs the task of requesting the location of the user by calling the
+     * requestLocationUpdates(). It initializes the location listener which will listen
+     * for a new location. Once the location is found, the onFoundCurrentLocation() is called
+     * and the location is passed as a parameter
+     * @throws SecurityException Should be called only if permissions are granted (>API 23)
+     *                           or the exception should be handled
+     */
     private void getLocationDetails()throws SecurityException{
+        /*  Display loading screen */
         showMainProgressBar();
-        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-        locationListener = new FeedlyLocationListener(this,lastKnownLocation,this);
+        /*  Initialize the location listener   */
+        locationListener = new FeedlyLocationListener(this,locationManager,this);
+
+        /*  Request location updates from the network   */
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,0, locationListener);
+
+        /*  Request location updates from GPS   */
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, locationListener);
-        Log.d(TAG,"Executed locationdetails");
     }
 
 
 
     /**
-     * This method is called when the phone gets a fix on the location of the user. It passes
+     * This method is called after the phone gets a fix on the best location of the user. It passes
      * the current location as a string
      * This method builds the URL to query newsApi.org with the location provided. The
      * URL is then passed to the DownloadNewsTask which downloads and parses the news feed.
@@ -195,7 +238,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /*  Download and parse news feed in background  */
         new DownloadNewsTask(this,location).execute(url);
-
+        
         /*  Stop listening for location updates */
         locationManager.removeUpdates(locationListener);
     }
@@ -222,17 +265,19 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         /*  News present! display it! */
             theFeeds = (ArrayList<Feed>) localNewsFeed;
             LoadDataOnScreen();
+
+            /*  Hide the loading screen */
             hideMainProgressBar();
         }
     }
 
 
     /**
-     * This method is called after a permission is requested to the user (> API 23). It provides the
-     * result of the requested permissions (in this case, GPS). If the permission is granted,
-     * the appropriate function requiring the resource should be called here after checking if the
-     * permission was granted. The method provides the necessary parameters for checking if
-     * permission was granted.
+     * This method is called after a permission for accessing sensitive information
+     * is requested to the user (> API 23). It provides the result of the requested permissions (in this case, GPS).
+     * If the permission is granted, the appropriate function requiring the resource should be called
+     * here after checking if the permission was granted. The method provides the necessary parameters
+     * for checking if permission was granted. Permissions once granted are remembered.
      *
      * @param requestCode The request code set while requesting the permission.
      * @param permissions An array containing the permissions
@@ -245,7 +290,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             case MY_PERMISSIONS_REQUEST_FINE_LOCATION:
                 if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Yay! Permission has been granted. Start location search task.
-                    getLocationDetails();
+                    /*  Check if GPS or network is enabled first and then call  */
+                    if(isLocationProvidersEnabled()) {
+                        getLocationDetails();
+                    }
                 } else {
                     // Permission request was denied. No news for you!
                     Toast.makeText(this,"Permission was denied",Toast.LENGTH_LONG).show();
@@ -299,6 +347,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+    /**
+     * Initializes Widgets and their respective click listeners
+     */
     private void initializeObjects(){
 
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -892,7 +943,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
              * the feed.
              */
             if (feed.isNewsFeed()) {
-                RVAdapter theAdapter = new RVAdapter(feed.getArticleList(), getContext(), feed.getCategory());
+                RVAdapter theAdapter = new RVAdapter(feed.getArticleList(), feed.getCategory());
                 rv.setAdapter(theAdapter);
             }
             else {
@@ -901,22 +952,28 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                  */
                 DownloadXml downloadXml;
                 if (DownloadXml.READLATER.equals(feed.getCategory())) {
-                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.READLATER);
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.READLATER);
                 } else if (DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
-                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.PERSONALBOARD);
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.PERSONALBOARD);
                 } else {
-                    downloadXml = new DownloadXml(this,getContext(), rv, DownloadXml.EXPLORE_FEEDS);
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.EXPLORE_FEEDS);
                 }
                 downloadXml.execute(feed);
                 feedCachedUrl = feed.getLink();
             }
         }
 
+        /**
+         * Called before any downloadXML task executes
+         */
         @Override
         public void beforeDownloadTask() {
             displayRecyclerProgressBar();
         }
 
+        /**
+         * Called after any downloadXML task completes execution
+         */
         @Override
         public void postTaskExecution() {
              hideRecyclerProgressBar();
@@ -974,7 +1031,57 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+    /**
+     * Performs a check to see if network or GPS is enabled. If neither of them are available,
+     * it alerts the user with a message asking them to turn on the GPS. If the user agrees, the
+     * alert opens up the location settings for the user.
+     *
+     * @return True if GPS or network is enabled. Returns false if not. (Displays alert if not
+     *          enabled)
+     */
+    private boolean isLocationProvidersEnabled(){
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+        final Context thisContext = this;
+        try {
+            gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
 
+        try {
+            network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
+
+        if(!gps_enabled && !network_enabled) {
+            // notify user
+            AlertDialog.Builder dialog = new AlertDialog.Builder(thisContext);
+            dialog.setMessage(thisContext.getResources().getString(R.string.gps_network_not_enabled));
+            dialog.setPositiveButton(thisContext.getResources().getString(R.string.open_location_settings), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    // TODO Auto-generated method stub
+                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    thisContext.startActivity(myIntent);
+                    //get gps
+                }
+            });
+            dialog.setNegativeButton(thisContext.getString(R.string.Cancel), new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            dialog.show();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Retrieves the user preferences about the default feed view. Sets the default feed
+     * accordingly.
+     */
     private void setDefaultFeedFromUserSettings() {
 
         SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
@@ -993,22 +1100,33 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
     }
 
-
+    /**
+     * Displays the edit content drawer
+     */
     private void showTheEditContentDrawer(){
         editContentLayout.setVisibility(View.VISIBLE);
         navDrawerLayout.setVisibility(View.GONE);
     }
 
+    /**
+     * Hides the edit content drawer
+     */
     private void hideTheEditContentDrawer(){
         editContentLayout.setVisibility(View.GONE);
         navDrawerLayout.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Displays the progress bar for news feed
+     */
     private void showMainProgressBar(){
         mainProgressBar.setVisibility(View.VISIBLE);
         mViewPager.setVisibility(View.INVISIBLE);
     }
 
+    /**
+     * Hides the progress bar
+     */
     private void hideMainProgressBar(){
         mainProgressBar.setVisibility(View.INVISIBLE);
         mViewPager.setVisibility(View.VISIBLE);

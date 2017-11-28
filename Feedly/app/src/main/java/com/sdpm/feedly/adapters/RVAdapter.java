@@ -30,9 +30,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     private Context context;
     private String feedCategory;
 
-    public RVAdapter(ArrayList<Article> articles, Context context, String feedCategory) {
+    public RVAdapter(ArrayList<Article> articles, String feedCategory) {
         this.articles = articles;
-        this.context = context;
         this.feedCategory = feedCategory;
 
     }
@@ -56,13 +55,15 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     @Override
     public FeedViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if(context==null){
+            context = parent.getContext();
+        }
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.feedrow,parent,false);
         FeedViewHolder fv = new FeedViewHolder(v);
         return fv;
     }
 
 
-//    TODO: Need to add functionality to download and display thumbnails in recylcer view
     @Override
     public void onBindViewHolder(FeedViewHolder holder,final int position) {
 

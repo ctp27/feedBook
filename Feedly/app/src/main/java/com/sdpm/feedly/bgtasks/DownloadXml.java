@@ -1,6 +1,5 @@
 package com.sdpm.feedly.bgtasks;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,7 +31,6 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     private RecyclerView recyclerView;
     private String action;
-    private Context context;
     private DownloadXmlListener theListener;
     /**
      * The constructor takes in the recycler view and the action to be performed post download as
@@ -45,15 +43,8 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
      */
 
-    public DownloadXml(Context context, RecyclerView recyclerView, String action){
-        this.context=context;
-        this.action = action;
-        this.recyclerView = recyclerView;
-    }
 
-    public DownloadXml(DownloadXmlListener theListener,Context context, RecyclerView recyclerView, String action){
-
-        this.context=context;
+    public DownloadXml(DownloadXmlListener theListener,RecyclerView recyclerView, String action){
         this.action = action;
         this.recyclerView = recyclerView;
         this.theListener = theListener;
@@ -68,9 +59,6 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
      * This method loops through the list of downloaded feeds and accordingly updates the
      * recycler view of the home screen as per the explore feeds feature i.e displays all feeds.
      * The method parses the XML and sets the recycler view accordingly.
-     *
-     * TODO: Update this accordingly based on the front end Recycler view.
-     * TODO: Right now I have set it to display the articles of just one feed. (See line 76)
      * @param theFeed  The object of Feed with the downloaded XML
      */
 
@@ -79,13 +67,11 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
             parser.parse(theFeed.getTheXml());
             theFeed.setArticleList(parser.getApplications());
 
-            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
             recyclerView.setAdapter(theAdapter);
             theListener.postTaskExecution();
 
     }
-
-
 
 
     /**
@@ -111,13 +97,13 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
      */
 
     private void displayReadLaterFeeds(Feed theFeed){
-        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
         theListener.postTaskExecution();
     }
 
     private void displayPersonalBoard(Feed theFeed){
-        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
         theListener.postTaskExecution();
     }

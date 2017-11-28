@@ -152,6 +152,9 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="add_your_first_source_to_get_personal_feeds">Add Your First Source to get personal feeds!</string>
     <string name="local_news">Local News</string>
+    <string name="gps_network_not_enabled">Location services need to be enabled. Enable location?</string>
+    <string name="open_location_settings">Enable</string>
+    <string name="Cancel">Not now</string>
 
     <string-array name="default_nav_array">
         <item>Personal</item>
