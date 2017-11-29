@@ -22,24 +22,13 @@
             android:layout_height="match_parent"
             android:orientation="vertical" >
 
-            <RatingBar
-                android:id="@+id/rat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ratings"
-                android:numStars="5"
-                android:stepSize="1.0"
-                android:layout_gravity="center"
-                />
-
             <TextView
                 android:id="@+id/article_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="This is a title This is a title This is a title This is a title This is a title"
                 android:textSize="24sp"
-                android:textStyle="bold"
-                android:layout_below="@id/rat"/>
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/article_info"
@@ -50,12 +39,24 @@
                 android:layout_marginTop="15dp"
                 android:text="feed blog name / by author / x hours ago" />
 
+            <TextView
+                android:id="@+id/total_article_rating"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/article_info"
+                android:textStyle="bold"
+                android:layout_marginTop="15dp"
+                android:text="Ratings 0/5.0 - (0 Vote)" />
+
+
             <ImageView
                 android:id="@+id/article_photo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_below="@+id/article_info"
+                android:layout_below="@+id/total_article_rating"
+                android:layout_marginTop="15dp"
                 android:cropToPadding="false"
                 android:src="@mipmap/ic_launcher" />
 
@@ -66,25 +67,40 @@
                 android:layout_below="@+id/article_photo"
                 android:text="TextView"
                 android:textSize="18sp"
+                android:layout_marginTop="15dp"
                 android:layout_marginBottom="15dp"/>
+
+            <TextView
+                android:id="@+id/article_rating_txtView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/article_desc"
+                android:textStyle="bold"
+                android:text="Rate this Article"
+                android:textAlignment="center"/>
+
+            <RatingBar
+                android:id="@+id/rat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ratings"
+                android:layout_below="@+id/article_rating"
+                android:numStars="5"
+                android:stepSize="1.0"
+                android:layout_gravity="center"
+                android:progressTint="@android:color/holo_orange_light"
+                android:progressBackgroundTint="@android:color/darker_gray"
+                android:secondaryProgressTint="@android:color/holo_red_dark"
+                />
 
             <Button
                 android:id="@+id/article_link_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/article_desc"
+                android:layout_below="@+id/rat"
                 android:text="Visit Webiste"
-                android:layout_marginBottom="5dp"/>
-
-            <RatingBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ratings"
-                android:layout_below="@+id/article_link_button"
-                android:layout_marginBottom="50dp"
-                android:numStars="5"
-                android:stepSize="1.0"
-                />
+                android:layout_marginBottom="60dp"/>
 
         </LinearLayout>
     </ScrollView>
@@ -94,7 +110,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="50dp"
         android:layout_marginLeft="11dp"
         android:layout_marginRight="11dp"
         fab:menu_animationDelayPerItem="55"
