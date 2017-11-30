@@ -29,7 +29,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
@@ -337,6 +339,135 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         ScrollView view = (ScrollView) getLayoutInflater().inflate(R.layout.search_side_layout, null);
 
         searchView.addView(view);
+
+        final ImageButton cookingBtn = (ImageButton) searchView.findViewById(R.id.cooking_btn);
+        final ImageButton foodBtn = (ImageButton) searchView.findViewById(R.id.food_btn);
+        final ImageButton gamingBtn = (ImageButton) searchView.findViewById(R.id.gaming_btn);
+        final ImageButton cultureBtn = (ImageButton) searchView.findViewById(R.id.culture_btn);
+        final ImageButton filmBtn = (ImageButton) searchView.findViewById(R.id.film_btn);
+
+        final EditText searchBar = (EditText) searchView.findViewById(R.id.tf_search_bar);
+
+        cookingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSearchBarText(cookingBtn, searchBar);
+                executeSearch(searchBar);
+            }
+        });
+        foodBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSearchBarText(foodBtn, searchBar);
+                executeSearch(searchBar);
+            }
+        });
+        gamingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSearchBarText(gamingBtn, searchBar);
+                executeSearch(searchBar);
+            }
+        });
+        cultureBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSearchBarText(cultureBtn, searchBar);
+                executeSearch(searchBar);
+            }
+        });
+        filmBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSearchBarText(filmBtn, searchBar);
+                executeSearch(searchBar);
+            }
+        });
+
+
+
+    }
+    private void setSearchBarText(ImageButton btn, EditText searchBar) {
+        if (btn.getId() == R.id.cooking_btn) {
+            searchBar.setText("#cooking", TextView.BufferType.EDITABLE);
+        }
+        else if (btn.getId() == R.id.food_btn) {
+            searchBar.setText("#food", TextView.BufferType.EDITABLE);
+        }
+        else if (btn.getId() == R.id.gaming_btn) {
+            searchBar.setText("#gaming", TextView.BufferType.EDITABLE);
+        }
+        else if (btn.getId() == R.id.culture_btn) {
+            searchBar.setText("#culture", TextView.BufferType.EDITABLE);
+        }
+        else {
+            searchBar.setText("#film", TextView.BufferType.EDITABLE);
+        }
+    }
+
+    private void executeSearch(EditText searchBar) {
+        final String text = searchBar.getText().toString();
+        final List<String> tagList = new ArrayList<>();
+        if (text.startsWith("#") && text.length() > 1) {
+            //search categories
+            database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d("DATABASETEST", "inside event " + dataSnapshot.getKey().toString());
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        //gives me the name of the category
+                        if (snapshot.getKey().toString().toLowerCase().startsWith(text.toLowerCase().substring(1))) {
+                            Log.d("DATABASETEST", "yes");
+
+                            //add found tags to list
+                            tagList.add("#" + snapshot.getKey().toString().toLowerCase());
+                        }
+                    }
+                    if (tagList.size() == 0) {
+                        //display not found page
+                        Log.d("DATABASETEST","Display not found");
+                    }
+                    else if (tagList.size() == 1){
+                        //display sources for tag
+                        Log.d("DATABASETEST","Display source");
+                    }
+                    else {
+                        //display list of tags
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+
+        }
+        else if (text.length() > 0){
+            //search source
+            Log.d("DATABASETEST","searching source");
+
+            database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        for (DataSnapshot subSnapshot : snapshot.getChildren()) {
+
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
+        else {
+
+        }
     }
 
     /**
@@ -693,6 +824,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        if (id == R.id.action_search) {
+            drawer.openDrawer(Gravity.RIGHT);
+        }
         //noinspection SimplifiableIfStatement
 //        if (id == R.id.action_settings) {
 //            Intent intent = new Intent(HomeNav.this, SettingsActivity.class);

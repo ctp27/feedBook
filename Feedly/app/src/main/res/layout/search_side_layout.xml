@@ -13,6 +13,7 @@
         android:orientation="vertical" >
 
         <EditText
+            android:id="@+id/tf_search_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Search"
@@ -25,26 +26,31 @@
             style="?blackText"/>
 
         <ImageButton
+            android:id="@+id/cooking_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@drawable/cooking_edited" />
 
         <ImageButton
+            android:id="@+id/film_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@drawable/film_edited" />
 
         <ImageButton
+            android:id="@+id/gaming_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@drawable/gaming_edited"/>
 
         <ImageButton
+            android:id="@+id/food_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@drawable/food_edited"/>
 
         <ImageButton
+            android:id="@+id/culture_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@drawable/culture_edited"/>
