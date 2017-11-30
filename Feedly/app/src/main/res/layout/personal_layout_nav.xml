@@ -94,12 +94,13 @@
 
     </LinearLayout>
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:id="@+id/edit_content_view"
-        android:visibility="invisible">
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -137,7 +138,6 @@
             style="?navListStyle"/>
 
     </LinearLayout>
-
 
 </LinearLayout>
 

@@ -1,4 +1,4 @@
-package com.sdpm.feedly.feedly;
+package com.sdpm.feedly.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,14 +11,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sdpm.feedly.feedly.R;
+import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.utils.HtmlParseUtils;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-
-import model.Article;
 
 /**
  * Created by Junaid on 10/5/2017.
@@ -30,9 +30,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     private Context context;
     private String feedCategory;
 
-    public RVAdapter(ArrayList<Article> articles, Context context, String feedCategory) {
+    public RVAdapter(ArrayList<Article> articles, String feedCategory) {
         this.articles = articles;
-        this.context = context;
         this.feedCategory = feedCategory;
 
     }
@@ -56,13 +55,15 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     @Override
     public FeedViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if(context==null){
+            context = parent.getContext();
+        }
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.feedrow,parent,false);
         FeedViewHolder fv = new FeedViewHolder(v);
         return fv;
     }
 
 
-//    TODO: Need to add functionality to download and display thumbnails in recylcer view
     @Override
     public void onBindViewHolder(FeedViewHolder holder,final int position) {
 
@@ -113,16 +114,20 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     private void setThePartialDescription(FeedViewHolder holder, int position) {
         String tempDesc = articles.get(position).getDescription();
-        if(HtmlParseUtils.containsHtml(tempDesc)){
+        if(tempDesc==null){
+            holder.feedDesc.setText("");
+
+        }else {
+            if (!tempDesc.isEmpty() && HtmlParseUtils.containsHtml(tempDesc)) {
 //             * If html then do this
-            holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
-        }
-        else {
-//             * If Not html then do this
-            if (tempDesc.length() <= 89) {
-                holder.feedDesc.setText(Html.fromHtml(tempDesc));
+                holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
             } else {
-                holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+//             * If Not html then do this
+                if (tempDesc.length() <= 89) {
+                    holder.feedDesc.setText(Html.fromHtml(tempDesc));
+                } else {
+                    holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+                }
             }
         }
     }

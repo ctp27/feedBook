@@ -1,16 +1,16 @@
 package com.sdpm.feedly.feedly;
 
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.os.Build;
-import android.support.v4.app.NavUtils;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
 public class FeedWebView extends AppCompatActivity {
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +24,7 @@ public class FeedWebView extends AppCompatActivity {
         browser.loadUrl(getIntent().getStringExtra("URL"));
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -35,6 +36,7 @@ public class FeedWebView extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 
     private class FeedWebViewClient extends WebViewClient {
         @SuppressWarnings("deprecation")

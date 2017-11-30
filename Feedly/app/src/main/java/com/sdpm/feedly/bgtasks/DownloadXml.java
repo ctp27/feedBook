@@ -1,21 +1,15 @@
-package com.sdpm.feedly.utils;
+package com.sdpm.feedly.bgtasks;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
-import com.sdpm.feedly.feedly.RVAdapter;
+import com.sdpm.feedly.adapters.RVAdapter;
+import com.sdpm.feedly.model.Feed;
+import com.sdpm.feedly.utils.ConnectionUtils;
+import com.sdpm.feedly.utils.XmlParser;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-
-import model.Feed;
 
 import static android.content.ContentValues.TAG;
 
@@ -37,7 +31,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     private RecyclerView recyclerView;
     private String action;
-    private Context context;
+    private DownloadXmlListener theListener;
     /**
      * The constructor takes in the recycler view and the action to be performed post download as
      * parameters. The recycler view is used to update the view. The action determines what
@@ -49,19 +43,22 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
      */
 
-    public DownloadXml(Context context, RecyclerView recyclerView, String action){
-        this.context=context;
+
+    public DownloadXml(DownloadXmlListener theListener,RecyclerView recyclerView, String action){
         this.action = action;
         this.recyclerView = recyclerView;
+        this.theListener = theListener;
+    }
+
+    public interface DownloadXmlListener{
+        void beforeDownloadTask();
+        void postTaskExecution();
     }
 
     /**
      * This method loops through the list of downloaded feeds and accordingly updates the
      * recycler view of the home screen as per the explore feeds feature i.e displays all feeds.
      * The method parses the XML and sets the recycler view accordingly.
-     *
-     * TODO: Update this accordingly based on the front end Recycler view.
-     * TODO: Right now I have set it to display the articles of just one feed. (See line 76)
      * @param theFeed  The object of Feed with the downloaded XML
      */
 
@@ -70,12 +67,11 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
             parser.parse(theFeed.getTheXml());
             theFeed.setArticleList(parser.getApplications());
 
-            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+            RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
             recyclerView.setAdapter(theAdapter);
+            theListener.postTaskExecution();
 
     }
-
-
 
 
     /**
@@ -101,13 +97,15 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
      */
 
     private void displayReadLaterFeeds(Feed theFeed){
-        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
+        theListener.postTaskExecution();
     }
 
     private void displayPersonalBoard(Feed theFeed){
-        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),context,theFeed.getCategory());
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
         recyclerView.setAdapter(theAdapter);
+        theListener.postTaskExecution();
     }
 
     /**
@@ -155,7 +153,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
         Feed theFeed = params[0];
         if(this.action.equals(DownloadXml.EXPLORE_FEEDS)) {
-            String s = downloadXML(theFeed.getLink());
+            String s = ConnectionUtils.downloadXML(theFeed.getLink());
             if (s == null) {
                 Log.e(TAG, "doInBackground: Error downloading");
             } else {
@@ -165,55 +163,9 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
         return theFeed;
     }
 
-    /**
-     * This method takes in the URL of the feed as a parameter. It contains the operations to download
-     * the feed. It returns a string with the downloaded XML data.
-     *
-     * @param urlPath Takes in the URL of the RSS feed
-     * @return A string containing the downloaded XML data
-     */
-
-    private String downloadXML(String urlPath) {
-        StringBuilder xmlResult = new StringBuilder();
-
-        try {
-            URL url = new URL(urlPath);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            int response = connection.getResponseCode();
-            Log.d(TAG, "downloadXML: The response code was " + response);
-//                InputStream inputStream = connection.getInputStream();
-//                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-//                BufferedReader reader = new BufferedReader(inputStreamReader);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-            int charsRead;
-            char[] inputBuffer = new char[2000];
-            while (true) {
-                charsRead = reader.read(inputBuffer);
-                if (charsRead < 0) {
-                    break;
-                }
-                if (charsRead > 0) {
-                    xmlResult.append(String.copyValueOf(inputBuffer, 0, charsRead));
-                }
-            }
-            reader.close();
-
-            return xmlResult.toString();
-        } catch (MalformedURLException e) {
-            Log.e(TAG, "downloadXML: Invalid URL " + e.getMessage());
-        } catch (IOException e) {
-            Log.e(TAG, "downloadXML: IO Exception reading data: " + e.getMessage());
-        } catch (SecurityException e) {
-            Log.e(TAG, "downloadXML: Security Exception.  Needs permisson? " + e.getMessage());
-//                e.printStackTrace();
-        }
-        return xmlResult.toString();
+    @Override
+    protected void onPreExecute() {
+        theListener.beforeDownloadTask();
     }
-
-
-
-
-
 }
 

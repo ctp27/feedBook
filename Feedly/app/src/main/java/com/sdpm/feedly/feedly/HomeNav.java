@@ -1,12 +1,18 @@
 package com.sdpm.feedly.feedly;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -14,6 +20,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -35,6 +42,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,17 +51,25 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.sdpm.feedly.utils.DownloadXml;
+import com.sdpm.feedly.adapters.CheckboxExpandableListAdapter;
+import com.sdpm.feedly.adapters.ExpandableListAdapter;
+import com.sdpm.feedly.adapters.RVAdapter;
+import com.sdpm.feedly.bgtasks.DownloadNewsTask;
+import com.sdpm.feedly.bgtasks.DownloadXml;
+import com.sdpm.feedly.model.Article;
+import com.sdpm.feedly.model.Feed;
+import com.sdpm.feedly.utils.ConnectionUtils;
+import com.sdpm.feedly.utils.FeedlyLocationListener;
+import com.sdpm.feedly.utils.TempStores;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import model.Article;
-import model.Feed;
-
-public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener {
+public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener,
+        DownloadNewsTask.DownloadNewsTaskListener,
+        FeedlyLocationListener.LocationChangedListener{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -63,13 +79,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-
+    private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION=0;
     DatabaseReference database;
     private ArrayList<Feed> theFeeds;
     private ArrayList<Feed> exploreFeeds;
@@ -82,7 +99,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     HashMap<String, List<Feed>> personalFeedsUnderCategory;
     private DrawerLayout drawer;
     private NavigationView searchView;
-    private  NavigationView navView;
+    private NavigationView navView;
     private ArrayList<String> personalBoardList;
     private ArrayAdapter<String> arrayAdapterPersonalBoard;
     private ListView lvPersonalBoard;
@@ -96,13 +113,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button settingsBtn;
     private Toolbar toolbar;
     private TextView todaysDefaultText;
+    private ProgressBar mainProgressBar;
 
     private LinearLayout navDrawerLayout;
     private LinearLayout editContentLayout;
+    private LocationManager locationManager;
+    private FeedlyLocationListener locationListener;
 
     private static final String TAG = "HomeNav";
     public static final String TODAYS_FEED = "Today";
-    public static final String EXPLORE_FEED= "Explore";
+    public static final String EXPLORE_FEED = "Explore";
     private static String defaultFeed;
     private boolean resumeFromSearch = false;
 
@@ -114,35 +134,20 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        /**
-         * TODO: defaultFeed should be assigned based on the usersettings
-         */
+        /*  Get location manager instance */
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
-        long rb_button = userDetails.getInt("default_view",0);
+        /*  Set the default feed based on User settings */
+        setDefaultFeedFromUserSettings();
 
-        if(rb_button==2131296451){
-            defaultFeed = TODAYS_FEED;
-
-        }
-        else if(rb_button == 2131296450)
-        {
-            Log.d(TAG,Long.toString(rb_button));
-            defaultFeed = EXPLORE_FEED;
-        }else{
-            defaultFeed = EXPLORE_FEED;
-        }
+        /*  Initialize the database */
+        database = FirebaseDatabase.getInstance().getReference();
 
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
         setSearchDrawer();
 
-        database = FirebaseDatabase.getInstance().getReference();
-
         prepareData();
-
-
-
 
         /* Initializes all widgets */
         initializeObjects();
@@ -159,6 +164,160 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
 
+    /**
+     * MAIN METHOD to call to DISPLAY LOCAL NEWS for the user's location. It starts
+     * the flow for getting the user location, downloading and parsing the news JSON data for
+     * the location and displaying it on the home screen.
+     *
+     * The flow is as follows:
+     * -    CHECK IF LOCATION PERMISSION EXISTS:
+     *      If permission exists, call getLocationDetails()
+     *      If permission doesn't exist, ask for permission. The result of the permission is called
+     *      in the onRequestPermissionsResult(), where getLocationDetails() is called if permission
+     *      granted.
+     * -    REQUEST USER LOCATION:
+     *      The getLocationDetails() method starts the request for the location. This starts searching
+     *      for the user's location in the background.
+     * -    QUERY NEWSAPI.ORG:
+     *      Once the user's location is found, the onFoundCurrentLocation() method is called.
+     *      The location is passed as a parameter. URL for querying NewsApi.org is generated and the
+     *      downloadNewsTask is called.
+     * -    DISPLAY NEWS FEED:
+     *      Once the News Feed is downloaded and parsed by the DownloadNewsTask, the onNewsDownloaded()
+     *      method is called and the downloaded feed is passed as a parameter.
+     *
+     *      TODO: @Daniel_Robaina: Call this method from the Navbar once you add the scrolling.
+     *      TODO:   Remove it from the menu item.
+     *
+     */
+    private void displayNewsFeed() {
+        /*  Check if permission for location is granted*/
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            /*  Permission not granted, request permissions     */
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+
+        }else {
+            /*  Permissions are granted. Check if GPS is on, if on, request location */
+            if(isLocationProvidersEnabled()) {
+                getLocationDetails();
+            }
+        }
+
+    }
+
+    /**
+     * Performs the task of requesting the location of the user by calling the
+     * requestLocationUpdates(). It initializes the location listener which will listen
+     * for a new location. Once the location is found, the onFoundCurrentLocation() is called
+     * and the location is passed as a parameter
+     * @throws SecurityException Should be called only if permissions are granted (>API 23)
+     *                           or the exception should be handled
+     */
+    private void getLocationDetails()throws SecurityException{
+        /*  Display loading screen */
+        showMainProgressBar();
+
+        /*  Initialize the location listener   */
+        locationListener = new FeedlyLocationListener(this,locationManager,this);
+
+        /*  Request location updates from the network   */
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,0, locationListener);
+
+        /*  Request location updates from GPS   */
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, locationListener);
+    }
+
+
+
+    /**
+     * This method is called after the phone gets a fix on the best location of the user. It passes
+     * the current location as a string
+     * This method builds the URL to query newsApi.org with the location provided. The
+     * URL is then passed to the DownloadNewsTask which downloads and parses the news feed.
+     * @param location Current location of the user in the format (city,state). For example,
+     *                 Kearny,NewJersey
+     */
+    @Override
+    public void onFoundCurrentLocation(String location) {
+        /*  Build and get URL object based on Location  */
+        URL url = ConnectionUtils.buildNewsUrlFromLocation(location.toLowerCase());
+
+        /*  Download and parse news feed in background  */
+        new DownloadNewsTask(this,location).execute(url);
+        
+        /*  Stop listening for location updates */
+        locationManager.removeUpdates(locationListener);
+    }
+
+
+    /**
+     * This method is called when the DownloadNewsTask completes execution in the background.
+     * It provides the List of populated news feeds of the city the user is in, as a parameter.
+     * The list is then used to display the pager adapter. Any task requiring the news feed should
+     * be called in this method. The article list is empty if there is no news in the area or
+     * if no internet connection.
+     * @param localNewsFeed A list containing news feed of the current location
+     */
+    @Override
+    public void onNewsDownloaded(List<Feed> localNewsFeed) {
+        /*  If no news for the city, get news for the state in which city is */
+        if(localNewsFeed.get(0).getArticleList().isEmpty()){
+            String location = localNewsFeed.get(0).getCategory();
+            String[] stringSplit = location.split(",");
+            URL url = ConnectionUtils.buildNewsUrlFromLocation(stringSplit[0]);
+            new DownloadNewsTask(this,stringSplit[0]).execute(url);
+        }
+        else {
+        /*  News present! display it! */
+            theFeeds = (ArrayList<Feed>) localNewsFeed;
+            LoadDataOnScreen();
+
+            /*  Hide the loading screen */
+            hideMainProgressBar();
+        }
+    }
+
+
+    /**
+     * This method is called after a permission for accessing sensitive information
+     * is requested to the user (> API 23). It provides the result of the requested permissions (in this case, GPS).
+     * If the permission is granted, the appropriate function requiring the resource should be called
+     * here after checking if the permission was granted. The method provides the necessary parameters
+     * for checking if permission was granted. Permissions once granted are remembered.
+     *
+     * @param requestCode The request code set while requesting the permission.
+     * @param permissions An array containing the permissions
+     * @param grantResults  The results array containing the results of the granted permissions
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        switch(requestCode){
+            case MY_PERMISSIONS_REQUEST_FINE_LOCATION:
+                if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Yay! Permission has been granted. Start location search task.
+                    /*  Check if GPS or network is enabled first and then call  */
+                    if(isLocationProvidersEnabled()) {
+                        getLocationDetails();
+                    }
+                } else {
+                    // Permission request was denied. No news for you!
+                    Toast.makeText(this,"Permission was denied",Toast.LENGTH_LONG).show();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+    }
+
+
+    /**
+     * This method is called whenever the activity is resumed from the stack. For example, when
+     * coming back to this activity from another activity
+     */
     @Override
     public void onResume(){
         super.onResume();
@@ -171,6 +330,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+    /**
+     * Private method responsible for filtering out the personal feeds from the default feed list.
+     * It creates a list containing only personal feeds and sets theFeeds to this list.
+     * It then calls the LoadDataOnScreen() method to display the theFeeds on screen
+     */
     private void displayPersonalFeeds(){
         List<String> thisList=null;
         List<Feed> personalFeeds = new ArrayList<>();
@@ -191,8 +355,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+    /**
+     * Initializes Widgets and their respective click listeners
+     */
     private void initializeObjects(){
 
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mainProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
         todaysDefaultText = (TextView) findViewById(R.id.todays_default_text);
         navDrawerLayout = (LinearLayout) findViewById(R.id.nav_drawer_view);
         editContentLayout = (LinearLayout) findViewById(R.id.edit_content_view);
@@ -310,7 +479,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                     defaultFeed = TODAYS_FEED;
                                 }
                                 else {
-                                    prepareData(); ////why need this call ???? -----------------
+
+//                                    prepareData(); not needed :P ////why need this call ???? -----
+
                                     defaultFeed = EXPLORE_FEED;
                                 }
                             }
@@ -689,7 +860,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
+
         mViewPager.addOnPageChangeListener(this);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
@@ -823,17 +994,25 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        if (id == R.id.action_search) {
-            drawer.openDrawer(Gravity.RIGHT);
+        switch (id) {
+            case R.id.action_settings:
+                Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.action_local_news:
+                displayNewsFeed();
+                break;
+            case R.id.action_search:
+                drawer.openDrawer(Gravity.RIGHT);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
-//            startActivity(intent);
-//        }
 
-        return super.onOptionsItemSelected(item);
+
+
+
+        return true;
     }
 
     @Override
@@ -863,14 +1042,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment
+                    implements DownloadXml.DownloadXmlListener{
         /**
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_FEED = "FEED";
+        private static final String KEY = "FEED";
         private Feed feed;
         private RecyclerView rv;
+        private ProgressBar recyclerProgressBar;
         private LinearLayoutManager llm;
         String feedCachedUrl = "";
         TextView todays;
@@ -886,7 +1067,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         public static PlaceholderFragment newInstance(Feed feed) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
-            args.putSerializable(ARG_FEED,feed);
+            int thisKey = feed.getName().hashCode();
+            args.putInt(KEY,thisKey);
+            TempStores.setFeed(thisKey,feed);
+//            args.putSerializable(ARG_FEED,feed);
             fragment.setArguments(args);
             return fragment;
         }
@@ -895,7 +1079,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_home_nav, container, false);
-            feed = (Feed) getArguments().getSerializable(ARG_FEED);
+            int key=getArguments().getInt(KEY);
+//            feed = (Feed) getArguments().getSerializable(ARG_FEED);
+            feed = TempStores.retrieveFeed(key);
+            recyclerProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_fragment);
             if (feed != null) {
                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
                 todays.setVisibility(View.INVISIBLE);
@@ -913,17 +1100,57 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             return rootView;
         }
 
-        private void displayFeed(){
-            DownloadXml downloadXml;
-            if(DownloadXml.READLATER.equals(feed.getCategory())) {
-                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.READLATER);
-            } else if(DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
-                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.PERSONALBOARD);
-            } else {
-                downloadXml = new DownloadXml(getContext(), rv, DownloadXml.EXPLORE_FEEDS);
+        private void displayFeed() {
+            /**
+             * If the feed is a news feed, no need to call the DownloadXML since the news feed
+             * is already downloaded and parsed by the DownloadNewsTask. Set the adapter with
+             * the feed.
+             */
+            if (feed.isNewsFeed()) {
+                RVAdapter theAdapter = new RVAdapter(feed.getArticleList(), feed.getCategory());
+                rv.setAdapter(theAdapter);
             }
-            downloadXml.execute(feed);
-            feedCachedUrl = feed.getLink();
+            else {
+                /**
+                 * Its an XML feed, need to download and populate as usual..
+                 */
+                DownloadXml downloadXml;
+                if (DownloadXml.READLATER.equals(feed.getCategory())) {
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.READLATER);
+                } else if (DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.PERSONALBOARD);
+                } else {
+                    downloadXml = new DownloadXml(this, rv, DownloadXml.EXPLORE_FEEDS);
+                }
+                downloadXml.execute(feed);
+                feedCachedUrl = feed.getLink();
+            }
+        }
+
+        /**
+         * Called before any downloadXML task executes
+         */
+        @Override
+        public void beforeDownloadTask() {
+            displayRecyclerProgressBar();
+        }
+
+        /**
+         * Called after any downloadXML task completes execution
+         */
+        @Override
+        public void postTaskExecution() {
+             hideRecyclerProgressBar();
+        }
+
+        private void displayRecyclerProgressBar(){
+            rv.setVisibility(View.INVISIBLE);
+            recyclerProgressBar.setVisibility(View.VISIBLE);
+        }
+
+        private void hideRecyclerProgressBar(){
+            recyclerProgressBar.setVisibility(View.INVISIBLE);
+            rv.setVisibility(View.VISIBLE);
         }
     }
 
@@ -965,23 +1192,107 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             return null;
         }
 
-        @Override
-        public Parcelable saveState() {
-            Bundle bundle = (Bundle) super.saveState();
-            if(bundle!=null)
-                bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
-            return bundle;
+
+    }
+
+    /**
+     * Performs a check to see if network or GPS is enabled. If neither of them are available,
+     * it alerts the user with a message asking them to turn on the GPS. If the user agrees, the
+     * alert opens up the location settings for the user.
+     *
+     * @return True if GPS or network is enabled. Returns false if not. (Displays alert if not
+     *          enabled)
+     */
+    private boolean isLocationProvidersEnabled(){
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+        final Context thisContext = this;
+        try {
+            gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
+
+        try {
+            network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
+
+        if(!gps_enabled && !network_enabled) {
+            // notify user
+            AlertDialog.Builder dialog = new AlertDialog.Builder(thisContext);
+            dialog.setMessage(thisContext.getResources().getString(R.string.gps_network_not_enabled));
+            dialog.setPositiveButton(thisContext.getResources().getString(R.string.open_location_settings), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    // TODO Auto-generated method stub
+                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    thisContext.startActivity(myIntent);
+                    //get gps
+                }
+            });
+            dialog.setNegativeButton(thisContext.getString(R.string.Cancel), new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            dialog.show();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Retrieves the user preferences about the default feed view. Sets the default feed
+     * accordingly.
+     */
+    private void setDefaultFeedFromUserSettings() {
+
+        SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+        long rb_button = userDetails.getInt("default_view",0);
+
+        if(rb_button==2131296451){
+            defaultFeed = TODAYS_FEED;
+
+        }
+        else if(rb_button == 2131296450)
+        {
+            Log.d(TAG,Long.toString(rb_button));
+            defaultFeed = EXPLORE_FEED;
+        }else{
+            defaultFeed = EXPLORE_FEED;
         }
     }
 
-
+    /**
+     * Displays the edit content drawer
+     */
     private void showTheEditContentDrawer(){
         editContentLayout.setVisibility(View.VISIBLE);
         navDrawerLayout.setVisibility(View.GONE);
     }
 
+    /**
+     * Hides the edit content drawer
+     */
     private void hideTheEditContentDrawer(){
         editContentLayout.setVisibility(View.GONE);
         navDrawerLayout.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Displays the progress bar for news feed
+     */
+    private void showMainProgressBar(){
+        mainProgressBar.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Hides the progress bar
+     */
+    private void hideMainProgressBar(){
+        mainProgressBar.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
     }
 }

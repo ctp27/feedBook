@@ -8,6 +8,14 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.sdpm.feedly.feedly.HomeNav$PlaceholderFragment">
 
+    <ProgressBar
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:id="@+id/progress_bar_fragment"
+        android:layout_centerInParent="true"
+        android:visibility="invisible"
+        />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rvArticles"
         android:layout_width="match_parent"

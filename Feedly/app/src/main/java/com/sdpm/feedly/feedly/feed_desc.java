@@ -1,5 +1,6 @@
 package com.sdpm.feedly.feedly;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -11,8 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,7 +24,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -50,17 +49,19 @@ import android.widget.Toast;
 
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.utils.TempStores;
 import com.sdpm.feedly.utils.TimeDateUtils;
 import com.squareup.picasso.Picasso;
-
-import com.github.clans.fab.FloatingActionButton;
-import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -69,11 +70,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import model.Article;
-import model.Feed;
+import bolts.Task;
 
 public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageChangeListener {
 
@@ -408,7 +407,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
          * The fragment argument representing the section number for this
          * fragment.
          */
-        private static final String ARG_ARTICLE = "ARTICLE";
+        private static final String KEY = "KEY";
         private static final String ARG_CATEGORY = "CATEGORY";
         Article a;
         TextView articleTitle;
@@ -416,6 +415,8 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         ImageView articleImg;
         Button linkButton;
         TextView articleInfo;
+        TextView totalArticleRating;
+        TextView articleRatingTxtView;
         FloatingActionMenu materialDesignFAM;
         FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
 
@@ -435,10 +436,13 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
 
             Bundle args = new Bundle();
             if(article != null) {
-                args.putSerializable(ARG_ARTICLE, article);
-                args.putSerializable(ARG_CATEGORY,Category);
+                    int key = article.getTitle().hashCode();
+                    args.putInt(KEY,key);
+                    TempStores.setArticle(key,article);
+                    args.putString(ARG_CATEGORY,Category);
+
             } else {
-                args.putString(ARG_ARTICLE, null);
+                args.putString(null, null);
             }
             fragment.setArguments(args);
             return fragment;
@@ -450,8 +454,9 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
 
             Spanned spanned;
             rootView = inflater.inflate(R.layout.fragment_feed_desc, container, false);
-            a = (Article) getArguments().getSerializable(ARG_ARTICLE);
-            String theCategory = (String) getArguments().getSerializable(ARG_CATEGORY);
+            int theKey = getArguments().getInt(KEY);
+            a = TempStores.getArticle(theKey);
+            String theCategory = getArguments().getString(ARG_CATEGORY);
 
             articleTitle = (TextView) rootView.findViewById(R.id.article_title);
             articleInfo = (TextView) rootView.findViewById(R.id.article_info);
@@ -462,23 +467,9 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
             floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
             floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
-
+            totalArticleRating = (TextView) rootView.findViewById(R.id.total_article_rating);
+            articleRatingTxtView = (TextView) rootView.findViewById(R.id.article_rating_txtView);
             ratBar = (RatingBar) rootView.findViewById(R.id.rat);
-            // Go to database and find already set rating value, if that isn't present set values as 0
-            ratBar.setRating(Float.parseFloat("1.0"));
-
-            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-                @Override
-                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-
-                    String rating = String.valueOf(v);
-
-                    // Insert rating value of article with email and article title to the database below
-                    Toast.makeText(getActivity().getApplicationContext(), rating, Toast.LENGTH_SHORT).show();
-
-                }
-            });
-
 
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {
@@ -494,9 +485,13 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                             openWebViewActivity(a.getLink());
                         }
                     });
+                    setArticleRatings(a);
                 } else {
                     floatingActionButtonShare.setVisibility(View.GONE);
                     linkButton.setVisibility(View.GONE);
+                    totalArticleRating.setVisibility(View.GONE);
+                    articleRatingTxtView.setVisibility(View.GONE);
+                    ratBar.setVisibility(View.GONE);
                 }
 
                 if(!email.equals("")) {
@@ -537,9 +532,15 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                     theDate = "N/A";
                 }
                 articleInfo.setText(theCategory+"/"+author+"/"+ TimeDateUtils.getTimePassed(getContext(),theDate));
+                String description = a.getDescription();
+                if(description == null){
+                    description = "";
+                }
+
 
                 if (Build.VERSION.SDK_INT >= 24) {
-                    spanned = Html.fromHtml(a.getDescription(), Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
+
+                    spanned = Html.fromHtml(description, Html.FROM_HTML_MODE_LEGACY, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
                             if(!source.startsWith("http")){
@@ -556,7 +557,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                         }
                     }, null);
                 } else {
-                    spanned = Html.fromHtml(a.getDescription(), new Html.ImageGetter() {
+                    spanned = Html.fromHtml(description, new Html.ImageGetter() {
                         @Override
                         public Drawable getDrawable(String source) {
                             if(!source.startsWith("http")){
@@ -583,6 +584,114 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
             return rootView;
+        }
+
+        private void setArticleRatings(final Article a) {
+
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DatabaseReference ratingDBRef = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.child("Link").getValue().equals(a.getLink())){
+                            dataSnapshot = snapshot;
+                            ratingDBRef = database.child("Ratings").child(snapshot.getKey());
+                            break;
+                        }
+                    }
+
+                    if(ratingDBRef != null) {
+                        showArticleRating(ratingDBRef);
+                    }
+
+                    if(email != null && email != "") {
+                        if (!dataSnapshot.child("Voters").child(email.split("@")[0]).exists()) {
+                            //set on click listener of rating
+                            final DatabaseReference ratingDBRefCopy = ratingDBRef;
+                            final DataSnapshot dataSnapshotCopy = dataSnapshot;
+                            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                                @Override
+                                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+                                    int rating = (int) v;
+                                    ratingBar.setIsIndicator(true);
+                                    if (ratingDBRefCopy == null) { //Article rated first time
+                                        Map articleLinkMap = new HashMap();
+                                        articleLinkMap.put("Link", a.getLink());
+
+                                        Map voterMap = new HashMap();
+                                        voterMap.put(email.split("@")[0],String.valueOf(rating));
+
+                                        Map ratingVotesCountMap = new HashMap();
+                                        for(int i = 1; i <= 5 ; i++) {
+                                            if( i == rating) {
+                                                ratingVotesCountMap.put(String.valueOf(i), "1");
+                                            } else {
+                                                ratingVotesCountMap.put(String.valueOf(i), "0");
+                                            }
+                                        }
+                                        String key = database.child("Ratings").push().getKey().toString();
+                                        database.child("Ratings").child(key).setValue(articleLinkMap);
+                                        database.child("Ratings").child(key).child("Voters").setValue(voterMap);
+                                        database.child("Ratings").child(key).child("Votes").setValue(ratingVotesCountMap);
+                                        showArticleRating(database.child("Ratings").child(key));
+
+                                    } else {
+                                        ratingDBRefCopy.child("Voters").child(email.split("@")[0]).setValue(String.valueOf(rating));
+                                        int votes = 1 + Integer.parseInt(dataSnapshotCopy.child("Votes").child(String.valueOf(rating)).getValue().toString());
+                                        ratingDBRefCopy.child("Votes").child(String.valueOf(rating)).setValue(String.valueOf(votes));
+                                        showArticleRating(ratingDBRefCopy);
+                                    }
+                                }
+                            });
+                        } else {
+                            ratBar.setIsIndicator(true);
+                        }
+                    } else {
+                        ratBar.setVisibility(View.GONE);
+                        articleRatingTxtView.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+        }
+
+        private void showArticleRating(DatabaseReference ratingDBRef) {
+            ratingDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    float rating = 0;
+                    int totalVoteCount = 0, weightedSum = 0;
+                    for(int i=1 ;i<=5 ;i++) {
+                        int numberOfVotes = Integer.parseInt(dataSnapshot.child("Votes").child(String.valueOf(i)).getValue().toString());
+                        weightedSum += (i * numberOfVotes);
+                        totalVoteCount += numberOfVotes;
+                    }
+                    rating = ((float) weightedSum) / ((float) totalVoteCount);
+                    if(totalVoteCount > 1) {
+                        totalArticleRating.setText("Rating: " + String.valueOf(rating) + "/5.0 (" + String.valueOf(totalVoteCount) + " Votes)");
+                    } else {
+                        totalArticleRating.setText("Rating: " + String.valueOf(rating) + "/5.0 (" + String.valueOf(totalVoteCount) + " Vote)");
+                    }
+                    if(email != null && email != "" &&  dataSnapshot.child("Voters").child(email.split("@")[0]).exists()) {
+                        articleRatingTxtView.setText("Your Rating");
+                        ratBar.setRating(Float.parseFloat(dataSnapshot.child("Voters").child(email.split("@")[0]).getValue().toString()));
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
         }
 
         private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
@@ -695,22 +804,26 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
 
             @Override
             protected void onPostExecute(Bitmap bitmap) {
-                if (bitmap != null) {
-                    BitmapDrawable d = new BitmapDrawable(getContext().getResources(),bitmap);
+                Context thisContext = getContext();
+                if (bitmap != null && thisContext!=null) {
+                    BitmapDrawable d = new BitmapDrawable(thisContext.getResources(), bitmap);
                     int height = bitmap.getHeight();
                     mDrawable.addLevel(1, 1, d);
-                    if(bitmap.getHeight() < getView().getWidth()) {
-                        height = getView().getWidth();
+                    View thisView = getView();
+                    if (thisView != null) {
+                        if (bitmap.getHeight() < thisView.getWidth()) {
+                            height = thisView.getWidth();
+                        }
+                        mDrawable.setBounds(0, 0, thisView.getWidth(), height);
+                        mDrawable.setLevel(1);
+                        CharSequence t = articleDesc.getText();
+                        articleDesc.setText(t);
+                    } else {
+                        mDrawable.setBounds(0, 0, 0, 0);
+                        mDrawable.setLevel(1);
+                        CharSequence t = articleDesc.getText();
+                        articleDesc.setText(t);
                     }
-                    mDrawable.setBounds(0, 0, getView().getWidth(), height);
-                    mDrawable.setLevel(1);
-                    CharSequence t = articleDesc.getText();
-                    articleDesc.setText(t);
-                }else {
-                    mDrawable.setBounds(0, 0, 0, 0);
-                    mDrawable.setLevel(1);
-                    CharSequence t = articleDesc.getText();
-                    articleDesc.setText(t);
                 }
             }
         }
@@ -758,13 +871,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
             return null;
         }
 
-        @Override
-        public Parcelable saveState() {
-            Bundle bundle = (Bundle) super.saveState();
-            if(bundle!=null)
-            bundle.putParcelableArray("states", null); // Never maintain any states from the base class, just null it out
-            return bundle;
-        }
+
     }
 
 }

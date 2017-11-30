@@ -1,4 +1,4 @@
-package model;
+package com.sdpm.feedly.model;
 
 import java.io.Serializable;
 
@@ -46,6 +46,15 @@ public class Article implements Serializable {
         this.author = author;
         this.description = description;
         this.publishedDate = publishedDate;
+    }
+
+    public Article(String title, String link, String description, String author, String publishedDate, String thumbnailLink) {
+        this.title = title;
+        this.link = link;
+        this.description = description;
+        this.author = author;
+        this.publishedDate = publishedDate;
+        this.thumbnailLink = thumbnailLink;
     }
 
     public Article() {

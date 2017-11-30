@@ -1,4 +1,4 @@
-package com.sdpm.feedly.feedly;
+package com.sdpm.feedly.adapters;
 
 /**
  * Created by Junaid on 11/7/2017.
@@ -12,10 +12,11 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sdpm.feedly.feedly.R;
+import com.sdpm.feedly.model.Feed;
+
 import java.util.HashMap;
 import java.util.List;
-
-import model.Feed;
 
 public class ExpandableListAdapter extends BaseExpandableListAdapter {
 

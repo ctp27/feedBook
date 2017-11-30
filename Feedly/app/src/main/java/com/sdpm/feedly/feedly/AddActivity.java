@@ -26,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import model.Article;
-import model.Feed;
+import com.sdpm.feedly.model.Article;
+import com.sdpm.feedly.model.Feed;
 
 public class AddActivity extends AppCompatActivity {
 
