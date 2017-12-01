@@ -99,6 +99,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     ArrayAdapter<String> arrayAdapterPersonalBoard;
     private static DrawerLayout drawer;
     private static NavigationView navView;
+    private Map<String,Boolean> articlesViewMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +123,11 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
         articleOnScreen = articles.get(position);
+
+        if(articles != null) {
+            initViewMap(articles, position);
+        }
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),articles);
@@ -145,6 +151,10 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     public void onPageSelected(int position) {
         if(articles!=null && position < articles.size()) {
             articleOnScreen = articles.get(position);
+            if(articleOnScreen.getLink()!= null && articlesViewMap.get(articleOnScreen.getLink()) == false) {
+                IncrementViewOfArticle(articleOnScreen);
+                articlesViewMap.put(articleOnScreen.getLink(),true);
+            }
         } else {
             articleOnScreen = null;
         }
@@ -153,6 +163,50 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     @Override
     public void onPageScrollStateChanged(int state) {
 
+    }
+
+    public void initViewMap(ArrayList<Article> articlesList, int position) {
+        articlesViewMap = new HashMap();
+        for(Article a : articlesList) {
+            if(a.getLink() != null)
+            articlesViewMap.put(a.getLink(),false);
+        }
+
+        if(articlesList.get(position).getLink() != null) {
+            articlesViewMap.put(articlesList.get(position).getLink(), true);
+            IncrementViewOfArticle(articlesList.get(position));
+        }
+    }
+
+    public void IncrementViewOfArticle(final Article article) {
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean isExistingArticle = false;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.child("Link").getValue().equals(article.getLink())) {
+                        isExistingArticle = true;
+                        int viewCount = 1 + Integer.parseInt(snapshot.child("Count").getValue().toString());
+                        database.child("Views").child(snapshot.getKey()).child("Count").setValue(String.valueOf(viewCount));
+                    }
+                }
+                if(!isExistingArticle) {
+                    Map viewMap = new HashMap();
+                    viewMap.put("Link", article.getLink());
+                    viewMap.put("Count", "1");
+                    database.child("Views").push().setValue(viewMap);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Views DbError Msg ->", d.getMessage());
+                Log.d("Views DbError Detail ->", d.getDetails());
+            }
+        });
     }
 
     private void setSideNavBar(){
