@@ -39,6 +39,7 @@ import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +56,7 @@ import com.sdpm.feedly.bgtasks.DownloadXml;
 import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.model.Feed;
 import com.sdpm.feedly.utils.ConnectionUtils;
+import com.sdpm.feedly.utils.DynamicLayoutUtils;
 import com.sdpm.feedly.utils.FeedlyLocationListener;
 import com.sdpm.feedly.utils.TempStores;
 
@@ -179,7 +181,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      *      method is called and the downloaded feed is passed as a parameter.
      *
      *      TODO: @Daniel_Robaina: Call this method from the Navbar once you add the scrolling.
-     *      TODO:   Remove it from the menu item.
+     *      TODO: Remove it from the menu item.
      *
      */
     private void displayNewsFeed() {
@@ -456,6 +458,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             if(deletedSuccessfully) {
                                 checkboxExpandableListAdapter.resetViewAfterDelete();
                                 expListAdapter.notifyDataSetChanged();
+                                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
                                 checkboxExpandableListAdapter.notifyDataSetChanged();
                                 if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
                                     displayPersonalFeeds();
@@ -490,15 +493,15 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
         navView = (NavigationView) drawer.findViewById(R.id.nav_view);
 
-        LinearLayout layout;
+        ScrollView layout;
 
         SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
         email = userDetails.getString("email", "");
         if (email.equals("")) { // user not logged in
-            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.activity_no_login_side_nav, null);
+            layout = (ScrollView) getLayoutInflater().inflate(R.layout.activity_no_login_side_nav,null);
         }
         else {
-            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
+            layout = (ScrollView) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
         }
         navView.addView(layout);
 
@@ -509,6 +512,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         toggle.syncState();
 
         ListView lv = (ListView) findViewById(R.id.default_nav_list);
+        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(lv);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -537,6 +541,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         expListView = (ExpandableListView) findViewById(R.id.personal_feeds_expandable_lv);
         editFeedsExpListView = (ExpandableListView) findViewById(R.id.editcontent_expandable);
+        expListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+            }
+        });
+        expListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+            }
+        });
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
@@ -564,6 +580,20 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 else {
                     Toast.makeText(getApplicationContext(),"checked",Toast.LENGTH_LONG).show();
                 }
+            }
+        });
+
+        editFeedsExpListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
+            }
+        });
+
+        editFeedsExpListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
             }
         });
 
@@ -764,6 +794,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
                             editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
                         }
+                        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+                        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
                     }
                     if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
                         displayPersonalFeeds();
@@ -809,10 +841,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(arrayAdapterPersonalBoard != null) {
                     arrayAdapterPersonalBoard.notifyDataSetChanged();
+
                 } else {
                     arrayAdapterPersonalBoard = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, personalBoardList);
                     lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
                 }
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(lvPersonalBoard);
             }
 
             @Override
@@ -1131,4 +1165,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         mainProgressBar.setVisibility(View.INVISIBLE);
         mViewPager.setVisibility(View.VISIBLE);
     }
+
+
 }

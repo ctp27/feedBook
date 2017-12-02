@@ -4,8 +4,9 @@ package com.sdpm.feedly.feedly;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
@@ -57,27 +58,27 @@ public class SignUpActivity extends AppCompatActivity {
                 Log.d("tag",password);
 
                 // Checking if fields are empty
-                if(fullname.equals("") && email.equals("") && password.equals("")){
+                if(TextUtils.isEmpty(fullname) && TextUtils.isEmpty(email) && TextUtils.isEmpty(password)){
                     Toast.makeText(getApplicationContext(), "Please enter your details", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
 
                 // Checking if fullname is empty
-                else if (fullname.matches("")) {
+                else if (TextUtils.isEmpty(fullname)) {
                     Toast.makeText(getApplicationContext(), "You did not enter your name", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
 
                 // Checking if email is empty
-                else if (email.matches("")){
+                else if (TextUtils.isEmpty(email)){
                     Toast.makeText(getApplicationContext(), "You did not enter the email-ID", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
                 // Checking if password is empty
-                else if (password.matches("")){
+                else if (TextUtils.isEmpty(password)){
                     Toast.makeText(getApplicationContext(), "You did not enter a password", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
