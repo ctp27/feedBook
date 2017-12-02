@@ -25,13 +25,15 @@ public class ConnectionUtils {
     private static final String NEWSAPI_API_KEY = BuildConfig.API_KEY;
 
     private static final String NEWS_API_BASE_URL = "https://newsapi.org/v2/everything";
-    private static final String QUERY_PARAM = "q";
+    private static final String QUERY_PARAM = "q=";
     private static final String API_KEY_PARAM = "apiKey";
+    private static final String SPACE=" ";
+    private static final String NEWS_QUERY = "news";
 
     public static URL buildNewsUrlFromLocation(String location){
 
         Uri builtUri = Uri.parse(NEWS_API_BASE_URL).buildUpon()
-                .encodedQuery(QUERY_PARAM+"="+location+" "+"news")
+                .encodedQuery(QUERY_PARAM+location+SPACE+NEWS_QUERY)
                 .appendQueryParameter(API_KEY_PARAM,NEWSAPI_API_KEY)
                 .build();
 
