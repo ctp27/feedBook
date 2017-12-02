@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -50,6 +51,8 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -68,6 +71,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import bolts.Task;
 
 public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageChangeListener {
 
@@ -94,6 +99,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     ArrayAdapter<String> arrayAdapterPersonalBoard;
     private static DrawerLayout drawer;
     private static NavigationView navView;
+    private Map<String,Boolean> articlesViewMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +123,11 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
         articleOnScreen = articles.get(position);
+
+        if(articles != null) {
+            initViewMap(articles, position);
+        }
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(),articles);
@@ -140,6 +151,10 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     public void onPageSelected(int position) {
         if(articles!=null && position < articles.size()) {
             articleOnScreen = articles.get(position);
+            if(articleOnScreen.getLink()!= null && articlesViewMap.get(articleOnScreen.getLink()) == false) {
+                IncrementViewOfArticle(articleOnScreen);
+                articlesViewMap.put(articleOnScreen.getLink(),true);
+            }
         } else {
             articleOnScreen = null;
         }
@@ -148,6 +163,50 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
     @Override
     public void onPageScrollStateChanged(int state) {
 
+    }
+
+    public void initViewMap(ArrayList<Article> articlesList, int position) {
+        articlesViewMap = new HashMap();
+        for(Article a : articlesList) {
+            if(a.getLink() != null)
+            articlesViewMap.put(a.getLink(),false);
+        }
+
+        if(articlesList.get(position).getLink() != null) {
+            articlesViewMap.put(articlesList.get(position).getLink(), true);
+            IncrementViewOfArticle(articlesList.get(position));
+        }
+    }
+
+    public void IncrementViewOfArticle(final Article article) {
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean isExistingArticle = false;
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if(snapshot.child("Link").getValue().equals(article.getLink())) {
+                        isExistingArticle = true;
+                        int viewCount = 1 + Integer.parseInt(snapshot.child("Count").getValue().toString());
+                        database.child("Views").child(snapshot.getKey()).child("Count").setValue(String.valueOf(viewCount));
+                    }
+                }
+                if(!isExistingArticle) {
+                    Map viewMap = new HashMap();
+                    viewMap.put("Link", article.getLink());
+                    viewMap.put("Count", "1");
+                    database.child("Views").push().setValue(viewMap);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Views DbError Msg ->", d.getMessage());
+                Log.d("Views DbError Detail ->", d.getDetails());
+            }
+        });
     }
 
     private void setSideNavBar(){
@@ -410,6 +469,8 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         ImageView articleImg;
         Button linkButton;
         TextView articleInfo;
+        TextView totalArticleRating;
+        TextView articleRatingTxtView;
         FloatingActionMenu materialDesignFAM;
         FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
 
@@ -460,23 +521,9 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
             floatingActionButtonPersonalBoard = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_personal_board);
             floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
-
+            totalArticleRating = (TextView) rootView.findViewById(R.id.total_article_rating);
+            articleRatingTxtView = (TextView) rootView.findViewById(R.id.article_rating_txtView);
             ratBar = (RatingBar) rootView.findViewById(R.id.rat);
-            // Go to database and find already set rating value, if that isn't present set values as 0
-            ratBar.setRating(Float.parseFloat("1.0"));
-
-            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-                @Override
-                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-
-                    String rating = String.valueOf(v);
-
-                    // Insert rating value of article with email and article title to the database below
-                    Toast.makeText(getActivity().getApplicationContext(), rating, Toast.LENGTH_SHORT).show();
-
-                }
-            });
-
 
             if(a != null) {
                 if (a.getLink() != null && a.getLink() != "") {
@@ -492,9 +539,13 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                             openWebViewActivity(a.getLink());
                         }
                     });
+                    setArticleRatings(a);
                 } else {
                     floatingActionButtonShare.setVisibility(View.GONE);
                     linkButton.setVisibility(View.GONE);
+                    totalArticleRating.setVisibility(View.GONE);
+                    articleRatingTxtView.setVisibility(View.GONE);
+                    ratBar.setVisibility(View.GONE);
                 }
 
                 if(!email.equals("")) {
@@ -587,6 +638,114 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
             return rootView;
+        }
+
+        private void setArticleRatings(final Article a) {
+
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    DatabaseReference ratingDBRef = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.child("Link").getValue().equals(a.getLink())){
+                            dataSnapshot = snapshot;
+                            ratingDBRef = database.child("Ratings").child(snapshot.getKey());
+                            break;
+                        }
+                    }
+
+                    if(ratingDBRef != null) {
+                        showArticleRating(ratingDBRef);
+                    }
+
+                    if(email != null && email != "") {
+                        if (!dataSnapshot.child("Voters").child(email.split("@")[0]).exists()) {
+                            //set on click listener of rating
+                            final DatabaseReference ratingDBRefCopy = ratingDBRef;
+                            final DataSnapshot dataSnapshotCopy = dataSnapshot;
+                            ratBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                                @Override
+                                public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+                                    int rating = (int) v;
+                                    ratingBar.setIsIndicator(true);
+                                    if (ratingDBRefCopy == null) { //Article rated first time
+                                        Map articleLinkMap = new HashMap();
+                                        articleLinkMap.put("Link", a.getLink());
+
+                                        Map voterMap = new HashMap();
+                                        voterMap.put(email.split("@")[0],String.valueOf(rating));
+
+                                        Map ratingVotesCountMap = new HashMap();
+                                        for(int i = 1; i <= 5 ; i++) {
+                                            if( i == rating) {
+                                                ratingVotesCountMap.put(String.valueOf(i), "1");
+                                            } else {
+                                                ratingVotesCountMap.put(String.valueOf(i), "0");
+                                            }
+                                        }
+                                        String key = database.child("Ratings").push().getKey().toString();
+                                        database.child("Ratings").child(key).setValue(articleLinkMap);
+                                        database.child("Ratings").child(key).child("Voters").setValue(voterMap);
+                                        database.child("Ratings").child(key).child("Votes").setValue(ratingVotesCountMap);
+                                        showArticleRating(database.child("Ratings").child(key));
+
+                                    } else {
+                                        ratingDBRefCopy.child("Voters").child(email.split("@")[0]).setValue(String.valueOf(rating));
+                                        int votes = 1 + Integer.parseInt(dataSnapshotCopy.child("Votes").child(String.valueOf(rating)).getValue().toString());
+                                        ratingDBRefCopy.child("Votes").child(String.valueOf(rating)).setValue(String.valueOf(votes));
+                                        showArticleRating(ratingDBRefCopy);
+                                    }
+                                }
+                            });
+                        } else {
+                            ratBar.setIsIndicator(true);
+                        }
+                    } else {
+                        ratBar.setVisibility(View.GONE);
+                        articleRatingTxtView.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+        }
+
+        private void showArticleRating(DatabaseReference ratingDBRef) {
+            ratingDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    float rating = 0;
+                    int totalVoteCount = 0, weightedSum = 0;
+                    for(int i=1 ;i<=5 ;i++) {
+                        int numberOfVotes = Integer.parseInt(dataSnapshot.child("Votes").child(String.valueOf(i)).getValue().toString());
+                        weightedSum += (i * numberOfVotes);
+                        totalVoteCount += numberOfVotes;
+                    }
+                    rating = ((float) weightedSum) / ((float) totalVoteCount);
+                    if(totalVoteCount > 1) {
+                        totalArticleRating.setText("Rating: " + String.valueOf(rating) + "/5.0 (" + String.valueOf(totalVoteCount) + " Votes)");
+                    } else {
+                        totalArticleRating.setText("Rating: " + String.valueOf(rating) + "/5.0 (" + String.valueOf(totalVoteCount) + " Vote)");
+                    }
+                    if(email != null && email != "" &&  dataSnapshot.child("Voters").child(email.split("@")[0]).exists()) {
+                        articleRatingTxtView.setText("Your Rating");
+                        ratBar.setRating(Float.parseFloat(dataSnapshot.child("Voters").child(email.split("@")[0]).getValue().toString()));
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
         }
 
         private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
