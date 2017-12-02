@@ -49,13 +49,22 @@
                 android:layout_marginTop="15dp"
                 android:text="Ratings 0/5.0 - (0 Vote)" />
 
+            <TextView
+                android:id="@+id/num_of_views"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/total_article_rating"
+                android:textStyle="bold"
+                android:text="0 Views" />
+
 
             <ImageView
                 android:id="@+id/article_photo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_below="@+id/total_article_rating"
+                android:layout_below="@+id/num_of_views"
                 android:layout_marginTop="15dp"
                 android:cropToPadding="false"
                 android:src="@mipmap/ic_launcher" />

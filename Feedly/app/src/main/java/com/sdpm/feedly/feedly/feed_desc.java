@@ -471,6 +471,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         TextView articleInfo;
         TextView totalArticleRating;
         TextView articleRatingTxtView;
+        TextView numOfViews;
         FloatingActionMenu materialDesignFAM;
         FloatingActionButton floatingActionButtonShare, floatingActionButtonPersonalBoard, floatingActionButtonReadLater;
 
@@ -522,6 +523,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
             floatingActionButtonReadLater = (FloatingActionButton) rootView.findViewById(R.id.fab_btn_add_read_later);
             linkButton = (Button) rootView.findViewById(R.id.article_link_button);
             totalArticleRating = (TextView) rootView.findViewById(R.id.total_article_rating);
+            numOfViews = (TextView) rootView.findViewById(R.id.num_of_views);
             articleRatingTxtView = (TextView) rootView.findViewById(R.id.article_rating_txtView);
             ratBar = (RatingBar) rootView.findViewById(R.id.rat);
 
@@ -539,6 +541,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                             openWebViewActivity(a.getLink());
                         }
                     });
+                    getNumberOfViews(a);
                     setArticleRatings(a);
                 } else {
                     floatingActionButtonShare.setVisibility(View.GONE);
@@ -638,6 +641,28 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
                 articleDesc.setMovementMethod(LinkMovementMethod.getInstance());
             }
             return rootView;
+        }
+
+        private  void getNumberOfViews(final Article a) {
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if(snapshot.child("Link").getValue().equals(a.getLink())) {
+                            numOfViews.setText(snapshot.child("Count").getValue().toString() + " Views");
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Views DbError Msg ->", d.getMessage());
+                    Log.d("Views DbError Detail ->", d.getDetails());
+                }
+            });
         }
 
         private void setArticleRatings(final Article a) {
