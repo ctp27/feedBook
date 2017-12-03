@@ -161,5 +161,6 @@
         <item>Read Later</item>
         <item>Explore</item>
         <item>Suggested Feeds</item>
+        <item>Local News</item>
     </string-array>
 </resources>

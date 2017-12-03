@@ -9,9 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -90,6 +88,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     public static final String PERSONAL_BOARD = "PersonalBoard";
     public static final String READ_LATER = "readLaterr";
     public static final String LOCAL_NEWS = "theLocalNews";
+    public static final String INDIVIDUAL_FEED = "individualFeed";
 
     private static String defaultFeed;
 
@@ -205,6 +204,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 else{
                     //TODO: show message that no preferences were selected
+                    Log.d(TAG,"NO preferences found");
                 }
                 // TODO: Call load data on screen here
             }
@@ -259,6 +259,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
         }
 
+        defaultFeed = LOCAL_NEWS;
     }
 
     /**
@@ -526,9 +527,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                     defaultFeed = TODAYS_FEED;
                                 }
                                 else {
-
-//                                    prepareData(); not needed :P ////why need this call ???? -----
-
                                     defaultFeed = EXPLORE_FEED;
                                 }
                             }
@@ -619,6 +617,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                 theFeeds = cachedFeeds;
                                 displaySuggestedFeeds();
                             }
+                        break;
+                    case 4:
+                            Log.d(TAG,"Current Tag is "+ defaultFeed);
+                            displayNewsFeed();
                 }
             }
         });
@@ -649,6 +651,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     String category = theFeeds.get(0).getCategory();
                     String feedName = theFeeds.get(0).getName();
                     getSupportActionBar().setTitle(category+"/"+feedName);
+                    defaultFeed=INDIVIDUAL_FEED;
                 }
                 return false;
             }
@@ -800,7 +803,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         LoadDataOnScreen();
                     }
                     getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+
                 }
+                else{
+
+//                    TODO: Display message showing that this page shows READ LATER
+                }
+                defaultFeed = READ_LATER;
             }
 
             @Override
@@ -960,9 +969,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             case R.id.action_settings:
                 Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
                 startActivity(intent);
-                break;
-            case R.id.action_local_news:
-                displayNewsFeed();
                 break;
             default:
                 return super.onOptionsItemSelected(item);
