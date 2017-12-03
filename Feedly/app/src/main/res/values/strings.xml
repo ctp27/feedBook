@@ -160,5 +160,6 @@
         <item>Personal</item>
         <item>Read Later</item>
         <item>Explore</item>
+        <item>Suggested Feeds</item>
     </string-array>
 </resources>

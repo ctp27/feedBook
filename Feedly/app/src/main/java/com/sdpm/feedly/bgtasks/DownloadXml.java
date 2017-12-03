@@ -28,6 +28,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     public static final String TODAY = "T0DAY";
     public static final String READLATER = "Read Later";
     public static final String PERSONALBOARD = "Personal Board";
+    public static final String SUGGESTED_FEEDS= "Suggested Feeds";
 
     private RecyclerView recyclerView;
     private String action;
@@ -134,9 +135,16 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
             case DownloadXml.PERSONALBOARD:
                 displayPersonalBoard(theFeed);
                 break;
-
+            case DownloadXml.SUGGESTED_FEEDS:
+                displaySuggestedFeeds(theFeed);
             default:
         }
+    }
+
+    private void displaySuggestedFeeds(Feed theFeed) {
+        RVAdapter theAdapter = new RVAdapter(theFeed.getArticleList(),theFeed.getCategory());
+        recyclerView.setAdapter(theAdapter);
+        theListener.postTaskExecution();
     }
 
     /**

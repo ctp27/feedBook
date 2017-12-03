@@ -3,7 +3,6 @@ package com.sdpm.feedly.feedly;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -19,9 +18,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.sdpm.feedly.model.User;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -29,6 +26,7 @@ public class SignUpActivity extends AppCompatActivity {
     // setting registration success to false as default
     boolean success = false;
     boolean existingUser = false;
+    public static final String NEW_USER_KEY="newUser";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,17 +113,18 @@ public class SignUpActivity extends AppCompatActivity {
                             if(existingUser){
                                 Toast.makeText(getApplicationContext(),"Email Id is already registered",Toast.LENGTH_SHORT).show();
                             }else {
-                                Map m = new HashMap();
-                                m.put("full_name",fullname);
-                                m.put("email_id",email);
-                                m.put("password", password);
-                                database.child("Users").push().setValue(m);
-                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
-                                SharedPreferences.Editor edit = userDetails.edit();
-                                edit.clear();
-                                edit.putString("email",email);
-                                edit.commit();
+//                                Map m = new HashMap();
+//                                m.put("full_name",fullname);
+//                                m.put("email_id",email);
+//                                m.put("password", password);
+//                                database.child("Users").push().setValue(m);
+//                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+//                                SharedPreferences.Editor edit = userDetails.edit();
+//                                edit.clear();
+//                                edit.putString("email",email);
+//                                edit.commit();
                                 Intent intent = new Intent(SignUpActivity.this, UserInterestsActivity.class);
+                                intent.putExtra(NEW_USER_KEY,new User(fullname,email,password,null));
                                 startActivity(intent);
                             }
                         }

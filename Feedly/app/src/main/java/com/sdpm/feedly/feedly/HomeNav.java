@@ -55,6 +55,7 @@ import com.sdpm.feedly.bgtasks.DownloadNewsTask;
 import com.sdpm.feedly.bgtasks.DownloadXml;
 import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.model.Feed;
+import com.sdpm.feedly.model.User;
 import com.sdpm.feedly.utils.ConnectionUtils;
 import com.sdpm.feedly.utils.DynamicLayoutUtils;
 import com.sdpm.feedly.utils.FeedlyLocationListener;
@@ -78,6 +79,19 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
 
+    private static final String TAG = "HomeNav";
+    public static final String TODAYS_FEED = "Today";
+    public static final String EXPLORE_FEED = "Explore";
+    public static final String SUGGESTED_FEED = "Suggested";
+    public static final String PERSONAL_BOARD = "PersonalBoard";
+    public static final String READ_LATER = "readLaterr";
+    public static final String LOCAL_NEWS = "theLocalNews";
+
+    private static String defaultFeed;
+
+    private boolean resumeFromSearch = false;
+
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
@@ -87,6 +101,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION=0;
     DatabaseReference database;
     private ArrayList<Feed> theFeeds;
+    private ArrayList<Feed> cachedFeeds;
     private ArrayList<Feed> exploreFeeds;
     String email = "";
     ExpandableListAdapter expListAdapter = null;
@@ -115,11 +130,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private LocationManager locationManager;
     private FeedlyLocationListener locationListener;
 
-    private static final String TAG = "HomeNav";
-    public static final String TODAYS_FEED = "Today";
-    public static final String EXPLORE_FEED = "Explore";
-    private static String defaultFeed;
-    private boolean resumeFromSearch = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +163,61 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+
+    }
+
+
+    /**
+     * Main method responsible for displaying feeds based on user suggestions
+     * Gets user preferences from database
+     */
+    private void displaySuggestedFeeds() {
+
+        database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Object> preferences = null;
+                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                    if(snapshot.child("email_id").getValue().toString().equals(email)){
+                        User thisUser = snapshot.getValue(User.class);
+                        preferences = thisUser.getPreferences();
+                        break;
+                    }
+                }
+                if(preferences!=null) {
+                    List<Feed> tempFeeds = theFeeds;
+                    Feed suggestedFeed = new Feed("Suggested Feeds",DownloadXml.SUGGESTED_FEEDS,"","",null);
+                    ArrayList<Article> suggestedFeedArticles = new ArrayList<>();
+                    for(Feed f: tempFeeds){
+                        if(preferences.contains(f.getCategory())){
+                            suggestedFeedArticles.add(f.getArticleList().get(0));
+                        }
+//                        Log.d(TAG,f.getCategory());
+                    }
+                    suggestedFeed.setArticleList(suggestedFeedArticles);
+                    theFeeds.clear();
+                    theFeeds.add(suggestedFeed);
+
+                    if(mSectionsPagerAdapter != null){
+                        mSectionsPagerAdapter.notifyDataSetChanged();
+                        getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
+                    } else {
+                        LoadDataOnScreen();
+                    }
+                    defaultFeed = SUGGESTED_FEED;
+                }
+                else{
+                    //TODO: show message that no preferences were selected
+                }
+                // TODO: Call load data on screen here
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
 
@@ -346,6 +412,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
             theFeeds = (ArrayList<Feed>) personalFeeds;
             LoadDataOnScreen();
+             defaultFeed =TODAYS_FEED;
 
     }
 
@@ -517,13 +584,25 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position){
-                    case 0: displayPersonalFeeds();
-                            defaultFeed =TODAYS_FEED;
-                            break;
+                    case 0:
+                        Log.d(TAG,"Current Tag is "+ defaultFeed);
+                        if(defaultFeed.equals(EXPLORE_FEED)){
+                            displayPersonalFeeds();
+                        }
+                        else if(defaultFeed.equals(TODAYS_FEED)){
+
+                        }
+                        else{
+                            theFeeds = cachedFeeds;
+                            displayPersonalFeeds();
+                        }
+                        break;
                     case 1: // Read Later
+                        Log.d(TAG,"Current Tag is "+ defaultFeed);
                         displayReadLaterArticle();
                         break;
                     case 2: //explore
+                        Log.d(TAG,"Current Tag is "+ defaultFeed);
                         if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
                             theFeeds = exploreFeeds;
                             if (theFeeds != null) {
@@ -535,6 +614,17 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             prepareData();
                         }
                         break;
+                    case 3:
+                        Log.d(TAG,"Current Tag is "+ defaultFeed);
+                            if(defaultFeed.equals(EXPLORE_FEED)) {
+                                displaySuggestedFeeds();
+                            }
+                            else if(defaultFeed.equals(SUGGESTED_FEED)){
+                            }
+                            else {
+                                theFeeds = cachedFeeds;
+                                displaySuggestedFeeds();
+                            }
                 }
             }
         });
@@ -656,6 +746,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         });
     }
 
+
+
     public void  prepareData(){
         exploreFeeds = new ArrayList<>();
         database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -668,6 +760,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
+                    cachedFeeds = exploreFeeds;
                     LoadDataOnScreen();
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
@@ -989,7 +1082,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     downloadXml = new DownloadXml(this, rv, DownloadXml.READLATER);
                 } else if (DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
                     downloadXml = new DownloadXml(this, rv, DownloadXml.PERSONALBOARD);
-                } else {
+                } else if(feed.getCategory().equals(DownloadXml.SUGGESTED_FEEDS)){
+                    downloadXml = new DownloadXml(this,rv,DownloadXml.SUGGESTED_FEEDS);
+                }
+                else {
                     downloadXml = new DownloadXml(this, rv, DownloadXml.EXPLORE_FEEDS);
                 }
                 downloadXml.execute(feed);
