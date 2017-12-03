@@ -36,6 +36,14 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     }
 
+    public void setArticlesInAdapter(ArrayList<Article> articles) {
+        this.articles = articles;
+    }
+
+    public ArrayList<Article> getArticlesFromAdapter() {
+        return this.articles;
+    }
+
     public static class FeedViewHolder extends RecyclerView.ViewHolder{
         CardView cv;
         ImageView feedImg;

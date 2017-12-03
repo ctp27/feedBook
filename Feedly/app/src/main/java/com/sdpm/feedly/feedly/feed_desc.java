@@ -69,8 +69,10 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import bolts.Task;
 
@@ -118,7 +120,8 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         populatePersonalBoardList();
 
 //        articles = (ArrayList<Article>) getIntent().getSerializableExtra("articlesList");
-        articles = (ArrayList<Article>)TempStores.getTheFeeds();
+        //articles = (ArrayList<Article>)TempStores.getTheFeeds();
+        articles = new ArrayList((ArrayList<Article>)TempStores.getTheFeeds());
         category = getIntent().getExtras().getString("category");
         getSupportActionBar().setTitle(category);
         int position = getIntent().getIntExtra("position",0);
@@ -444,13 +447,111 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }else if(id == android.R.id.home){
+        if(id == android.R.id.home){
             finish();
+            return true;
+        } else if(id == R.id.action_sort_by_rating){
+            sortArticlesByRating();
+            return true;
+        } else if(id == R.id.action_sort_by_views){
+            sortArticleByViews();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void sortArticlesByRating() {
+        //sort by rating and notify data set change for msectionadapter
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Map<Double,ArrayList<Article>> articlesTreeMap;
+                articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                for(Article a : articles) {
+                    DataSnapshot ratingArticleSnapShot = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                            ratingArticleSnapShot = snapshot;
+                            break;
+                        }
+                    }
+                    Double rating = 0.0;
+                    if (ratingArticleSnapShot != null) {
+                        int totalVoteCount = 0, weightedSum = 0;
+                        for(int i=1 ;i<=5 ;i++) {
+                            int numberOfVotes = Integer.parseInt(ratingArticleSnapShot.child("Votes").child(String.valueOf(i)).getValue().toString());
+                            weightedSum += (i * numberOfVotes);
+                            totalVoteCount += numberOfVotes;
+                        }
+                        rating = ((double) weightedSum) / ((double) totalVoteCount);
+                    }
+                    if(!articlesTreeMap.containsKey(rating)) {
+                        articlesTreeMap.put(rating, new ArrayList<Article>());
+                    }
+                    articlesTreeMap.get(rating).add(a);
+                }
+
+                articles.clear();
+                for(Map.Entry<Double,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                    ArrayList<Article> list = entry.getValue();
+                    articles.addAll(list);
+                }
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
+    }
+
+    private  void sortArticleByViews() {
+        //sort by views and notify data set change for msectionPagerAdapter
+        final DatabaseReference database;
+        database = FirebaseDatabase.getInstance().getReference();
+
+        database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Map<Integer,ArrayList<Article>> articlesTreeMap;
+                articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                for(Article a : articles) {
+                    DataSnapshot viewArticleSnapShot = null;
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                            viewArticleSnapShot = snapshot;
+                            break;
+                        }
+                    }
+                    int views = 0;
+                    if (viewArticleSnapShot != null) {
+                        views = Integer.parseInt(viewArticleSnapShot.child("Count").getValue().toString());
+                    }
+                    if(!articlesTreeMap.containsKey(views)) {
+                        articlesTreeMap.put(views, new ArrayList<Article>());
+                    }
+                    articlesTreeMap.get(views).add(a);
+                }
+
+                articles.clear();
+                for(Map.Entry<Integer,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                    ArrayList<Article> list = entry.getValue();
+                    articles.addAll(list);
+                }
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError d) {
+                Log.d("Login DbError Msg ->", d.getMessage());
+                Log.d("Login DbError Detail ->", d.getDetails());
+            }
+        });
     }
 
     /**

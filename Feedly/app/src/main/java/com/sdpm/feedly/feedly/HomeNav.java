@@ -43,6 +43,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -63,8 +64,11 @@ import com.sdpm.feedly.utils.TempStores;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener,
         DownloadNewsTask.DownloadNewsTaskListener,
@@ -156,16 +160,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Initializes all widgets */
         initializeObjects();
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
     }
 
 
@@ -1018,6 +1012,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private LinearLayoutManager llm;
         String feedCachedUrl = "";
         TextView todays;
+        FloatingActionMenu materialDesignFAM;
+        com.github.clans.fab.FloatingActionButton floatingActionButtonSortByRating, floatingActionButtonSortByView;
 
         public PlaceholderFragment() {
 
@@ -1045,6 +1041,24 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             int key=getArguments().getInt(KEY);
 //            feed = (Feed) getArguments().getSerializable(ARG_FEED);
             feed = TempStores.retrieveFeed(key);
+            materialDesignFAM = (FloatingActionMenu) rootView.findViewById(R.id.material_design_android_floating_action_menu);
+            floatingActionButtonSortByRating = (com.github.clans.fab.FloatingActionButton) rootView.findViewById(R.id.fab_sort_rating);
+            floatingActionButtonSortByView = (com.github.clans.fab.FloatingActionButton) rootView.findViewById(R.id.fab_sort_views);
+
+            floatingActionButtonSortByRating.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sortArticlesByRating();
+                }
+            });
+
+            floatingActionButtonSortByView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sortArticleByViews();
+                }
+            });
+
             recyclerProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_fragment);
             if (feed != null) {
                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
@@ -1117,6 +1131,108 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private void hideRecyclerProgressBar(){
             recyclerProgressBar.setVisibility(View.INVISIBLE);
             rv.setVisibility(View.VISIBLE);
+        }
+
+        private void sortArticlesByRating() {
+            //sort by rating and notify data set change for msectionadapter
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    RVAdapter theAdapter = (RVAdapter) rv.getAdapter();
+                    ArrayList<Article> articles = new ArrayList<Article>(theAdapter.getArticlesFromAdapter());
+                    Map<Double,ArrayList<Article>> articlesTreeMap;
+                    articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                    for(Article a : articles) {
+                        DataSnapshot ratingArticleSnapShot = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                                ratingArticleSnapShot = snapshot;
+                                break;
+                            }
+                        }
+                        Double rating = 0.0;
+                        if (ratingArticleSnapShot != null) {
+                            int totalVoteCount = 0, weightedSum = 0;
+                            for(int i=1 ;i<=5 ;i++) {
+                                int numberOfVotes = Integer.parseInt(ratingArticleSnapShot.child("Votes").child(String.valueOf(i)).getValue().toString());
+                                weightedSum += (i * numberOfVotes);
+                                totalVoteCount += numberOfVotes;
+                            }
+                            rating = ((double) weightedSum) / ((double) totalVoteCount);
+                        }
+                        if(!articlesTreeMap.containsKey(rating)) {
+                            articlesTreeMap.put(rating, new ArrayList<Article>());
+                        }
+                        articlesTreeMap.get(rating).add(a);
+                    }
+
+                    articles.clear();
+                    for(Map.Entry<Double,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                        ArrayList<Article> list = entry.getValue();
+                        articles.addAll(list);
+                    }
+                    theAdapter.setArticlesInAdapter(articles);
+                    theAdapter.notifyDataSetChanged();
+                    materialDesignFAM.close(true);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+        }
+
+        private  void sortArticleByViews() {
+            //sort by views and notify data set change for msectionPagerAdapter
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    RVAdapter theAdapter = (RVAdapter) rv.getAdapter();
+                    ArrayList<Article> articles = new ArrayList<Article>(theAdapter.getArticlesFromAdapter());
+                    Map<Integer,ArrayList<Article>> articlesTreeMap;
+                    articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                    for(Article a : articles) {
+                        DataSnapshot viewArticleSnapShot = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                                viewArticleSnapShot = snapshot;
+                                break;
+                            }
+                        }
+                        int views = 0;
+                        if (viewArticleSnapShot != null) {
+                            views = Integer.parseInt(viewArticleSnapShot.child("Count").getValue().toString());
+                        }
+                        if(!articlesTreeMap.containsKey(views)) {
+                            articlesTreeMap.put(views, new ArrayList<Article>());
+                        }
+                        articlesTreeMap.get(views).add(a);
+                    }
+
+                    articles.clear();
+                    for(Map.Entry<Integer,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                        ArrayList<Article> list = entry.getValue();
+                        articles.addAll(list);
+                    }
+                    theAdapter.setArticlesInAdapter(articles);
+                    theAdapter.notifyDataSetChanged();
+                    materialDesignFAM.close(true);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
         }
     }
 
