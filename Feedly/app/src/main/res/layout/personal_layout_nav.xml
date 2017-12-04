@@ -9,14 +9,8 @@
     android:layout_height="wrap_content"
     android:paddingTop="25dp"
     android:orientation="vertical"
-<<<<<<< HEAD
     style="?navBackground">
-||||||| merged common ancestors
-    style="?navBackground"
     android:background="#D3D3D3">
-=======
-    android:background="#D3D3D3">
->>>>>>> 8a4d961fac967f2c685c49b51113a1b023be463c
 
 
     <LinearLayout
