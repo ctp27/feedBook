@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="?pageBackground"
+    android:theme="@style/Theme.Material_Light"
     android:fitsSystemWindows="true"
     tools:context="com.sdpm.feedly.feedly.HomeNav">
 

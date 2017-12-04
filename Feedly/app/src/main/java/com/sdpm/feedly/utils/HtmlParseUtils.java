@@ -13,7 +13,7 @@ import java.net.URL;
 
 public class HtmlParseUtils {
 
-    private static final int DESC_LENGTH=89;
+    public static final int DESC_LENGTH=90;
     private static final String TAG = "HtmlParseUtils";
 
     /**
@@ -36,14 +36,23 @@ public class HtmlParseUtils {
      * @return returns a string with only text
      */
 
-    public static String getPartialDescription(String htmlString){
+    public static String getPartialDescription(String htmlString, String title){
 
-        String s = Jsoup.parse(htmlString).text();
-        if(s.length()<=DESC_LENGTH){
-            return s;
+        String result = Jsoup.parse(htmlString).text();
+
+        if(result.length()+title.length()<=DESC_LENGTH) {
+            return result;
         }
-        else
-            return s.substring(0,DESC_LENGTH);
+            else{
+                int difference = DESC_LENGTH - title.length();
+                if (difference <= 0) {
+                    return "";
+                } else {
+                    return result.substring(0, difference);
+                }
+
+        }
+
 
     }
 

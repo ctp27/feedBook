@@ -198,7 +198,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
         switch (position){
             case 0:
-                Log.d(TAG,"Current Tag is "+ defaultFeed);
                 if(defaultFeed.equals(EXPLORE_FEED)){
                     displayPersonalFeeds();
                 }
@@ -211,7 +210,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 break;
             case 1: // Read Later
-                Log.d(TAG,"Current Tag is "+ defaultFeed);
                 displayReadLaterArticle();
                 break;
             case 2: //explore
@@ -228,19 +226,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 break;
             case 3:
-                Log.d(TAG,"Current Tag is "+ defaultFeed);
-                if(defaultFeed.equals(EXPLORE_FEED)) {
-                    displaySuggestedFeeds();
-                }
-                else if(defaultFeed.equals(SUGGESTED_FEED)){
-                }
-                else {
-                    theFeeds = cachedFeeds;
+                if(!defaultFeed.equals(SUGGESTED_FEED)){
                     displaySuggestedFeeds();
                 }
                 break;
             case 4:
-                Log.d(TAG,"Current Tag is "+ defaultFeed);
                 displayNewsFeed();
                 break;
         }
@@ -249,7 +239,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     /**
      * Main method responsible for displaying feeds based on user suggestions
-     * Gets user preferences from database.
+     * Gets user preferences from database. Call this method to displau the Suggested Feeds
      */
     private void displaySuggestedFeeds() {
 
@@ -272,6 +262,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 else{
                     /*  No preferences found   */
                     /* Show default screen asking to select preferences */
+                    hideMainProgressBar();
                     displaySuggestFeedDefaultScreen();
                 }
             }
@@ -282,6 +273,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         });
     }
 
+    /**
+     * This method is called when the SuggesedFeedsTask completes downloading and parsing
+     * the suggested feeds in the background. This method sets the feed to theFeeds variable
+     * and loads the data on screen
+     * @param suggestedFeed The feed containing the suggestion articles
+     */
     @Override
     public void onPostExecuteSuggestionsTask(Feed suggestedFeed) {
         theFeeds.clear();
@@ -804,7 +801,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
                     cachedFeeds = exploreFeeds;
-            
+
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
                         createListOfPersonalBoard();

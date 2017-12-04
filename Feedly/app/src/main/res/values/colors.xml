@@ -6,4 +6,5 @@
     <color name="black">#000000</color>
     <color name="feedly_grren">#2bb24c</color>
     <color name="warn_btn">#D32F2F</color>
+    <color name = "background">#212121</color>
 </resources>

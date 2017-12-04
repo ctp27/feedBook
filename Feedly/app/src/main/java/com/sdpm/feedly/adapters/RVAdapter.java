@@ -80,7 +80,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         /* Method sets the imageView for the current position*/
         setTheRowImage(holder,position);
 
-        setThePartialDescription(holder,position);
+        setThePartialDescription(holder,position,articles.get(position).getTitle());
 
         String author = articles.get(position).getAuthor();
         String dateString=null;
@@ -120,21 +120,30 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
      * @param position the current row position to be set
      */
 
-    private void setThePartialDescription(FeedViewHolder holder, int position) {
+    private void setThePartialDescription(FeedViewHolder holder, int position, String title) {
+
         String tempDesc = articles.get(position).getDescription();
-        if(tempDesc==null){
+
+        if(tempDesc==null || tempDesc.isEmpty()){
             holder.feedDesc.setText("");
 
         }else {
-            if (!tempDesc.isEmpty() && HtmlParseUtils.containsHtml(tempDesc)) {
+            if (HtmlParseUtils.containsHtml(tempDesc)) {
 //             * If html then do this
-                holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc));
+                holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc,title));
             } else {
 //             * If Not html then do this
-                if (tempDesc.length() <= 89) {
+                if (tempDesc.length() + title.length()<=HtmlParseUtils.DESC_LENGTH) {
                     holder.feedDesc.setText(Html.fromHtml(tempDesc));
                 } else {
-                    holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0, 89)));
+                    int difference = HtmlParseUtils.DESC_LENGTH -title.length();
+                    if(difference<=0){
+                        holder.feedDesc.setText(Html.fromHtml(""));
+                    }
+                    else {
+                        holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0,difference)));
+                    }
+
                 }
             }
         }
