@@ -43,13 +43,14 @@ public class SuggestedFeedsTask extends AsyncTask<List<Feed>,Void,List<Feed>> {
         Feed suggestedFeed = new Feed("Suggested Feeds",DownloadXml.SUGGESTED_FEEDS,"","",null);
         ArrayList<Article> suggestedFeedArticles = new ArrayList<>();
         for(Feed f: feeds){
-            XmlParser parser = new XmlParser();
-            parser.parse(f.getTheXml());
-            f.setArticleList(parser.getApplications());
-            for(int i=0;i<innerCounter;i++) {
-                suggestedFeedArticles.add(f.getArticleList().get(i));
+            if(f.getTheXml()!=null) {
+                XmlParser parser = new XmlParser();
+                parser.parse(f.getTheXml());
+                f.setArticleList(parser.getApplications());
+                for (int i = 0; i < innerCounter; i++) {
+                    suggestedFeedArticles.add(f.getArticleList().get(i));
+                }
             }
-
         }
         suggestedFeed.setArticleList(suggestedFeedArticles);
         theListener.onPostExecuteSuggestionsTask(suggestedFeed);

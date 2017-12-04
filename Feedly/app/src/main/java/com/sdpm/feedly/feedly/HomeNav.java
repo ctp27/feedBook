@@ -137,6 +137,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private LinearLayout suggestFeedsDefaultView;
     private Button inputInterestBtn;
     private TextView readLaterDefaultText;
+    private Button editInterestsBtn;
 
 
 
@@ -172,7 +173,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
-        
+
         prepareData();
 
         /* Initializes all widgets */
@@ -497,6 +498,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         suggestFeedsDefaultView = (LinearLayout) findViewById(R.id.suggest_feeds_default_msg);
         inputInterestBtn = (Button) findViewById(R.id.input_interests_btn);
         readLaterDefaultText = (TextView) findViewById(R.id.read_later_default_msg);
+        editInterestsBtn = (Button) findViewById(R.id.edit_interests_btn);
+
+        editInterestsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeNav.this,UserInterestsActivity.class);
+                intent.putExtra(UserInterestsActivity.EXISTING_USER_EMAIL,email);
+                startActivity(intent);
+            }
+        });
 
         inputInterestBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -793,15 +804,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
                     cachedFeeds = exploreFeeds;
+            
+                    if(!email.equals("")) {
+                        createExpandableListOfPersonalFeeds();
+                        createListOfPersonalBoard();
+                    }
                     if(isReturningFromInterests){
                         displaySuggestedFeeds();
                         return;
                     }
                     LoadDataOnScreen();
-                    if(!email.equals("")) {
-                        createExpandableListOfPersonalFeeds();
-                        createListOfPersonalBoard();
-                    }
 
                 }
             }
