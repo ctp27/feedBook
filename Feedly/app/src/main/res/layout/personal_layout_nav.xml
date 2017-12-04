@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fitsSystemWindows="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:paddingTop="25dp"
     android:orientation="vertical"
+<<<<<<< HEAD
     style="?navBackground">
+||||||| merged common ancestors
+    style="?navBackground"
+    android:background="#D3D3D3">
+=======
+    android:background="#D3D3D3">
+>>>>>>> 8a4d961fac967f2c685c49b51113a1b023be463c
 
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:id="@+id/nav_drawer_view"
         android:visibility="visible">
@@ -44,7 +56,7 @@
             android:layout_margin="15dp"
             android:background="@drawable/side_nav_button"
             android:text="Add Source"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/black"
             android:layout_marginBottom="10dp"/>
 
         <Button
@@ -54,8 +66,19 @@
             android:layout_margin="15dp"
             android:background="@drawable/side_nav_button"
             android:text="Edit Content"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/black"
             android:layout_marginBottom="10dp"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:id="@+id/edit_interests_btn"
+            android:background="@drawable/side_nav_button"
+            android:text="Edit Interests"
+            android:textColor="@color/black"
+            android:layout_marginBottom="10dp"/>
+
 
         <TextView
             android:layout_width="match_parent"
@@ -87,9 +110,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="15dp"
-            android:background="@drawable/side_nav_button"
+            android:background="@color/warn_btn"
             android:text="LOGOUT"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="#ffff"
             android:layout_marginBottom="10dp"/>
 
     </LinearLayout>
@@ -97,7 +120,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:id="@+id/edit_content_view"
         android:visibility="gone">
@@ -138,6 +161,7 @@
             style="?navListStyle"/>
 
     </LinearLayout>
-
 </LinearLayout>
+
+</ScrollView>
 

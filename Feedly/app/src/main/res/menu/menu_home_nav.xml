@@ -7,6 +7,7 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+<<<<<<< HEAD
     <item
         android:id="@+id/action_search"
         android:icon="@android:drawable/ic_menu_search"
@@ -17,4 +18,12 @@
         android:orderInCategory="101"
         android:title="@string/local_news"
         app:showAsAction="never" />
+||||||| merged common ancestors
+    <item
+        android:id="@+id/action_local_news"
+        android:orderInCategory="101"
+        android:title="@string/local_news"
+        app:showAsAction="never" />
+=======
+>>>>>>> 8a4d961fac967f2c685c49b51113a1b023be463c
 </menu>

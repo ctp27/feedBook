@@ -3,9 +3,9 @@ package com.sdpm.feedly.feedly;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
@@ -18,9 +18,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.sdpm.feedly.model.User;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -28,6 +26,7 @@ public class SignUpActivity extends AppCompatActivity {
     // setting registration success to false as default
     boolean success = false;
     boolean existingUser = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,27 +56,27 @@ public class SignUpActivity extends AppCompatActivity {
                 Log.d("tag",password);
 
                 // Checking if fields are empty
-                if(fullname.equals("") && email.equals("") && password.equals("")){
+                if(TextUtils.isEmpty(fullname) && TextUtils.isEmpty(email) && TextUtils.isEmpty(password)){
                     Toast.makeText(getApplicationContext(), "Please enter your details", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
 
                 // Checking if fullname is empty
-                else if (fullname.matches("")) {
+                else if (TextUtils.isEmpty(fullname)) {
                     Toast.makeText(getApplicationContext(), "You did not enter your name", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
 
                 // Checking if email is empty
-                else if (email.matches("")){
+                else if (TextUtils.isEmpty(email)){
                     Toast.makeText(getApplicationContext(), "You did not enter the email-ID", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
                 // Checking if password is empty
-                else if (password.matches("")){
+                else if (TextUtils.isEmpty(password)){
                     Toast.makeText(getApplicationContext(), "You did not enter a password", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
@@ -114,17 +113,18 @@ public class SignUpActivity extends AppCompatActivity {
                             if(existingUser){
                                 Toast.makeText(getApplicationContext(),"Email Id is already registered",Toast.LENGTH_SHORT).show();
                             }else {
-                                Map m = new HashMap();
-                                m.put("full_name",fullname);
-                                m.put("email_id",email);
-                                m.put("password", password);
-                                database.child("Users").push().setValue(m);
-                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
-                                SharedPreferences.Editor edit = userDetails.edit();
-                                edit.clear();
-                                edit.putString("email",email);
-                                edit.commit();
+//                                Map m = new HashMap();
+//                                m.put("full_name",fullname);
+//                                m.put("email_id",email);
+//                                m.put("password", password);
+//                                database.child("Users").push().setValue(m);
+//                                SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
+//                                SharedPreferences.Editor edit = userDetails.edit();
+//                                edit.clear();
+//                                edit.putString("email",email);
+//                                edit.commit();
                                 Intent intent = new Intent(SignUpActivity.this, UserInterestsActivity.class);
+                                intent.putExtra(UserInterestsActivity.NEW_USER_KEY,new User(fullname,email,password,null));
                                 startActivity(intent);
                             }
                         }

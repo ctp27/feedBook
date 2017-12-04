@@ -24,7 +24,7 @@ public class FeedlyLocationListener implements LocationListener {
     private static final String TAG = FeedlyLocationListener.class.getSimpleName();
     private static final int TWO_MINUTES = 1000 * 60 * 2;
 
-    private static  Map<String, String> states;
+    private  Map<String, String> states;
 
 
     private LocationChangedListener theListener;

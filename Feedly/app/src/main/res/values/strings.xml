@@ -156,10 +156,15 @@
     <string name="gps_network_not_enabled">Location services need to be enabled. Enable location?</string>
     <string name="open_location_settings">Enable</string>
     <string name="Cancel">Not now</string>
+    <string name="suggest_default_msg">Let us know your interests to help suggest some articles for you.</string>
+    <string name="select_interests">Select Interests</string>
+    <string name="readlater_default_msg">The articles you mark as read later will appear here. You currently have no articles to read</string>
 
     <string-array name="default_nav_array">
         <item>Personal</item>
         <item>Read Later</item>
         <item>Explore</item>
+        <item>Suggested Feeds</item>
+        <item>Local News</item>
     </string-array>
 </resources>

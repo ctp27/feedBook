@@ -9,9 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,6 +17,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -43,9 +42,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -56,20 +57,27 @@ import com.sdpm.feedly.adapters.ExpandableListAdapter;
 import com.sdpm.feedly.adapters.RVAdapter;
 import com.sdpm.feedly.bgtasks.DownloadNewsTask;
 import com.sdpm.feedly.bgtasks.DownloadXml;
+import com.sdpm.feedly.bgtasks.SuggestedFeedsTask;
 import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.model.Feed;
+import com.sdpm.feedly.model.User;
 import com.sdpm.feedly.utils.ConnectionUtils;
+import com.sdpm.feedly.utils.DynamicLayoutUtils;
 import com.sdpm.feedly.utils.FeedlyLocationListener;
 import com.sdpm.feedly.utils.TempStores;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener,
         DownloadNewsTask.DownloadNewsTaskListener,
-        FeedlyLocationListener.LocationChangedListener{
+        FeedlyLocationListener.LocationChangedListener,
+        SuggestedFeedsTask.SuggestedFeedsTaskListener{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -80,6 +88,23 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
 
+    private static final String TAG = "HomeNav";
+    public static final String TODAYS_FEED = "Today";
+    public static final String EXPLORE_FEED = "Explore";
+    public static final String SUGGESTED_FEED = "Suggested";
+    public static final String PERSONAL_BOARD = "PersonalBoard";
+    public static final String READ_LATER = "readLaterr";
+    public static final String LOCAL_NEWS = "theLocalNews";
+    public static final String INDIVIDUAL_FEED = "individualFeed";
+    private boolean isReadLaterDefaultScreenActive = false;
+    private boolean isSuggestFeedDefaultScreenActive = false;
+    private boolean isReturningFromInterests = false;
+
+    private static String defaultFeed;
+
+    private boolean resumeFromSearch = false;
+
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
@@ -89,6 +114,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION=0;
     DatabaseReference database;
     private ArrayList<Feed> theFeeds;
+    private ArrayList<Feed> cachedFeeds;
     private ArrayList<Feed> exploreFeeds;
     String email = "";
     ExpandableListAdapter expListAdapter = null;
@@ -114,17 +140,19 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Toolbar toolbar;
     private TextView todaysDefaultText;
     private ProgressBar mainProgressBar;
+    private LinearLayout suggestFeedsDefaultView;
+    private Button inputInterestBtn;
+    private TextView readLaterDefaultText;
+    private Button editInterestsBtn;
+
+
 
     private LinearLayout navDrawerLayout;
     private LinearLayout editContentLayout;
     private LocationManager locationManager;
     private FeedlyLocationListener locationListener;
 
-    private static final String TAG = "HomeNav";
-    public static final String TODAYS_FEED = "Today";
-    public static final String EXPLORE_FEED = "Explore";
-    private static String defaultFeed;
-    private boolean resumeFromSearch = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,7 +161,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         setContentView(R.layout.activity_no_login_side_nav);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Log.d(TAG,"OnCreate");
 
+        if(getIntent().hasExtra(UserInterestsActivity.IS_RETURN_FROM_INTERESTS)){
+            if(getIntent().getBooleanExtra(UserInterestsActivity.IS_RETURN_FROM_INTERESTS,false)){
+                isReturningFromInterests = true;
+            }
+        }
         /*  Get location manager instance */
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -151,18 +185,129 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Initializes all widgets */
         initializeObjects();
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fabHome);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
     }
 
+
+    /**
+     * This method handles the click events for the first five items in the
+     * navigation drawer i.e Personal Feeds, Explore Feeds, Read Later, Suggested Feeds and
+     * Local News. The appropriate methods are called for each click event. The event is identified
+     * by the position parameter passed to this method.
+     * @param position the postition of the list element in the NavDrawer
+     */
+    private void onNavDrawerClickAction(int position) {
+
+        if(isReadLaterDefaultScreenActive){
+            hideReadLaterDefaultScreen();
+        }
+        else if(isSuggestFeedDefaultScreenActive){
+            hideSuggestFeedDefaultScreen();
+        }
+        switch (position){
+            case 0:
+                if(defaultFeed.equals(EXPLORE_FEED)){
+                    displayPersonalFeeds();
+                }
+                else if(defaultFeed.equals(TODAYS_FEED)){
+
+                }
+                else{
+                    theFeeds = cachedFeeds;
+                    displayPersonalFeeds();
+                }
+                break;
+            case 1: // Read Later
+                displayReadLaterArticle();
+                break;
+            case 2: //explore
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
+                    theFeeds = exploreFeeds;
+                    if (theFeeds != null) {
+                        if(mSectionsPagerAdapter!=null) {
+                            mSectionsPagerAdapter.notifyDataSetChanged();
+                        }
+                        else {
+                            LoadDataOnScreen();
+                        }
+                        getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
+                    }
+                }else {
+                    defaultFeed = EXPLORE_FEED;
+                    prepareData();
+                }
+                break;
+            case 3:
+                if(!defaultFeed.equals(SUGGESTED_FEED)){
+                    displaySuggestedFeeds();
+                }
+                break;
+            case 4:
+                displayNewsFeed();
+                break;
+        }
+        drawer.closeDrawer(Gravity.LEFT);
+    }
+
+    /**
+     * Main method responsible for displaying feeds based on user suggestions
+     * Gets user preferences from database. Call this method to displau the Suggested Feeds
+     */
+    private void displaySuggestedFeeds() {
+
+        database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Object> preferences = null;
+                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                    if(snapshot.child("email_id").getValue().toString().equals(email)){
+                        User thisUser = snapshot.getValue(User.class);
+                        preferences = thisUser.getPreferences();
+                        break;
+                    }
+                }
+                if(preferences!=null) {
+                    showMainProgressBar();
+                    new SuggestedFeedsTask(HomeNav.this,preferences).execute(theFeeds);
+                }
+                else{
+                    /*  No preferences found   */
+                    /* Show default screen asking to select preferences */
+                    hideMainProgressBar();
+                    displaySuggestFeedDefaultScreen();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    /**
+     * This method is called when the SuggesedFeedsTask completes downloading and parsing
+     * the suggested feeds in the background. This method sets the feed to theFeeds variable
+     * and loads the data on screen
+     * @param suggestedFeed The feed containing the suggestion articles
+     */
+    @Override
+    public void onPostExecuteSuggestionsTask(Feed suggestedFeed) {
+        theFeeds.clear();
+        theFeeds.add(suggestedFeed);
+        if(mSectionsPagerAdapter != null){
+            mSectionsPagerAdapter.notifyDataSetChanged();
+        } else {
+            LoadDataOnScreen();
+        }
+        getSupportActionBar().setTitle("Suggested Feeds");
+        defaultFeed = SUGGESTED_FEED;
+        hideMainProgressBar();
+
+        if(isReturningFromInterests){
+            isReturningFromInterests = false;
+        }
+    }
 
     /**
      * MAIN METHOD to call to DISPLAY LOCAL NEWS for the user's location. It starts
@@ -187,7 +332,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      *      method is called and the downloaded feed is passed as a parameter.
      *
      *      TODO: @Daniel_Robaina: Call this method from the Navbar once you add the scrolling.
-     *      TODO:   Remove it from the menu item.
+     *      TODO: Remove it from the menu item.
      *
      */
     private void displayNewsFeed() {
@@ -204,6 +349,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 getLocationDetails();
             }
         }
+
 
     }
 
@@ -227,6 +373,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /*  Request location updates from GPS   */
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, locationListener);
+        defaultFeed = LOCAL_NEWS;
     }
 
 
@@ -314,21 +461,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
 
-    /**
-     * This method is called whenever the activity is resumed from the stack. For example, when
-     * coming back to this activity from another activity
-     */
-    @Override
-    public void onResume(){
-        super.onResume();
-        if(resumeFromSearch) {
-            createExpandableListOfPersonalFeeds();
-            resumeFromSearch = false;
-        } else if(theFeeds != null){
-            createListOfPersonalBoard();
-        }
-
-    }
 
     /**
      * Private method responsible for filtering out the personal feeds from the default feed list.
@@ -352,8 +484,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
             theFeeds = (ArrayList<Feed>) personalFeeds;
             LoadDataOnScreen();
+             defaultFeed =TODAYS_FEED;
 
     }
+
 
     /**
      * Initializes Widgets and their respective click listeners
@@ -376,6 +510,28 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
+                startActivity(intent);
+            }
+        });
+        suggestFeedsDefaultView = (LinearLayout) findViewById(R.id.suggest_feeds_default_msg);
+        inputInterestBtn = (Button) findViewById(R.id.input_interests_btn);
+        readLaterDefaultText = (TextView) findViewById(R.id.read_later_default_msg);
+        editInterestsBtn = (Button) findViewById(R.id.edit_interests_btn);
+
+        editInterestsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeNav.this,UserInterestsActivity.class);
+                intent.putExtra(UserInterestsActivity.EXISTING_USER_EMAIL,email);
+                startActivity(intent);
+            }
+        });
+
+        inputInterestBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeNav.this,UserInterestsActivity.class);
+                intent.putExtra(UserInterestsActivity.EXISTING_USER_EMAIL,email);
                 startActivity(intent);
             }
         });
@@ -473,15 +629,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             if(deletedSuccessfully) {
                                 checkboxExpandableListAdapter.resetViewAfterDelete();
                                 expListAdapter.notifyDataSetChanged();
+                                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
                                 checkboxExpandableListAdapter.notifyDataSetChanged();
                                 if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
                                     displayPersonalFeeds();
                                     defaultFeed = TODAYS_FEED;
                                 }
                                 else {
-
-//                                    prepareData(); not needed :P ////why need this call ???? -----
-
                                     defaultFeed = EXPLORE_FEED;
                                 }
                             }
@@ -649,15 +803,15 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
         navView = (NavigationView) drawer.findViewById(R.id.nav_view);
 
-        LinearLayout layout;
+        ScrollView layout;
 
         SharedPreferences userDetails = getSharedPreferences("LoginInfo", MODE_PRIVATE);
         email = userDetails.getString("email", "");
         if (email.equals("")) { // user not logged in
-            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.activity_no_login_side_nav, null);
+            layout = (ScrollView) getLayoutInflater().inflate(R.layout.activity_no_login_side_nav,null);
         }
         else {
-            layout = (LinearLayout) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
+            layout = (ScrollView) getLayoutInflater().inflate(R.layout.personal_layout_nav, null);
         }
         navView.addView(layout);
 
@@ -668,34 +822,30 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         toggle.syncState();
 
         ListView lv = (ListView) findViewById(R.id.default_nav_list);
+        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(lv);
+
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (position){
-                    case 0: displayPersonalFeeds();
-                            defaultFeed =TODAYS_FEED;
-                            break;
-                    case 1: // Read Later
-                        displayReadLaterArticle();
-                        break;
-                    case 2: //explore
-                        if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
-                            theFeeds = exploreFeeds;
-                            if (theFeeds != null) {
-                                mSectionsPagerAdapter.notifyDataSetChanged();
-                                getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
-                            }
-                        }else {
-                            defaultFeed = EXPLORE_FEED;
-                            prepareData();
-                        }
-                        break;
-                }
+                /*  Method which handles click events of the NavDrawer list */
+                onNavDrawerClickAction(position);
             }
         });
 
         expListView = (ExpandableListView) findViewById(R.id.personal_feeds_expandable_lv);
         editFeedsExpListView = (ExpandableListView) findViewById(R.id.editcontent_expandable);
+        expListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+            }
+        });
+        expListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+            }
+        });
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
@@ -708,6 +858,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     String category = theFeeds.get(0).getCategory();
                     String feedName = theFeeds.get(0).getName();
                     getSupportActionBar().setTitle(category+"/"+feedName);
+                    defaultFeed=INDIVIDUAL_FEED;
                 }
                 return false;
             }
@@ -723,6 +874,20 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 else {
                     Toast.makeText(getApplicationContext(),"checked",Toast.LENGTH_LONG).show();
                 }
+            }
+        });
+
+        editFeedsExpListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
+            }
+        });
+
+        editFeedsExpListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
             }
         });
 
@@ -785,6 +950,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         });
     }
 
+
     public void  prepareData(){
         exploreFeeds = new ArrayList<>();
         database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -797,11 +963,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
-                    LoadDataOnScreen();
+                    cachedFeeds = exploreFeeds;
+
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
                         createListOfPersonalBoard();
                     }
+                    if(isReturningFromInterests){
+                        displaySuggestedFeeds();
+                        return;
+                    }
+                    LoadDataOnScreen();
+
                 }
             }
 
@@ -843,6 +1016,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     }
                     getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
                 }
+                else{
+                    /*   COMPLETED: Display message showing that this page shows READ LATER  */
+                    displayReadLaterDefaultScreen();
+                }
+                defaultFeed = READ_LATER;
             }
 
             @Override
@@ -923,11 +1101,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                             checkboxExpandableListAdapter = new CheckboxExpandableListAdapter(getBaseContext(), personalCategoriesList, personalFeedsUnderCategory, removeFeedsBtn);
                             editFeedsExpListView.setAdapter(checkboxExpandableListAdapter);
                         }
+                        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+                        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(editFeedsExpListView);
                     }
                     if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
                         displayPersonalFeeds();
                         defaultFeed =TODAYS_FEED;
                     }
+
                 }
             }
 
@@ -937,6 +1118,53 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 Log.d("Login DbError Detail ->", d.getDetails());
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG,"onPause");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG,"OnStart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG,"OnStop");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG,"onSavedInstanceState");
+    }
+
+    /**
+     * This method is called whenever the activity is resumed from the stack. For example, when
+     * coming back to this activity from another activity
+     */
+    @Override
+    public void onResume(){
+        super.onResume();
+        Log.d(TAG,"onResume");
+        if(resumeFromSearch) {
+            createExpandableListOfPersonalFeeds();
+            resumeFromSearch = false;
+        } else if(theFeeds != null){
+            createListOfPersonalBoard();
+        }
+
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG,"onRestart");
     }
 
     public void createListOfPersonalBoard() {
@@ -968,10 +1196,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(arrayAdapterPersonalBoard != null) {
                     arrayAdapterPersonalBoard.notifyDataSetChanged();
+
                 } else {
                     arrayAdapterPersonalBoard = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, personalBoardList);
                     lvPersonalBoard.setAdapter(arrayAdapterPersonalBoard);
                 }
+                DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(lvPersonalBoard);
             }
 
             @Override
@@ -1055,10 +1285,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private LinearLayoutManager llm;
         String feedCachedUrl = "";
         TextView todays;
+        FloatingActionMenu materialDesignFAM;
+        com.github.clans.fab.FloatingActionButton floatingActionButtonSortByRating, floatingActionButtonSortByView;
 
-        public PlaceholderFragment() {
 
-        }
 
         /**
          * Returns a new instance of this fragment for the given section
@@ -1082,6 +1312,24 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             int key=getArguments().getInt(KEY);
 //            feed = (Feed) getArguments().getSerializable(ARG_FEED);
             feed = TempStores.retrieveFeed(key);
+            materialDesignFAM = (FloatingActionMenu) rootView.findViewById(R.id.material_design_android_floating_action_menu);
+            floatingActionButtonSortByRating = (com.github.clans.fab.FloatingActionButton) rootView.findViewById(R.id.fab_sort_rating);
+            floatingActionButtonSortByView = (com.github.clans.fab.FloatingActionButton) rootView.findViewById(R.id.fab_sort_views);
+
+            floatingActionButtonSortByRating.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sortArticlesByRating();
+                }
+            });
+
+            floatingActionButtonSortByView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sortArticleByViews();
+                }
+            });
+
             recyclerProgressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar_fragment);
             if (feed != null) {
                 todays = (TextView) rootView.findViewById(R.id.todays_default_text);
@@ -1119,7 +1367,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     downloadXml = new DownloadXml(this, rv, DownloadXml.READLATER);
                 } else if (DownloadXml.PERSONALBOARD.equals(feed.getCategory())) {
                     downloadXml = new DownloadXml(this, rv, DownloadXml.PERSONALBOARD);
-                } else {
+                } else if(feed.getCategory().equals(DownloadXml.SUGGESTED_FEEDS)){
+                    downloadXml = new DownloadXml(this,rv,DownloadXml.SUGGESTED_FEEDS);
+                }
+                else {
                     downloadXml = new DownloadXml(this, rv, DownloadXml.EXPLORE_FEEDS);
                 }
                 downloadXml.execute(feed);
@@ -1133,6 +1384,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         @Override
         public void beforeDownloadTask() {
             displayRecyclerProgressBar();
+
         }
 
         /**
@@ -1141,7 +1393,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         @Override
         public void postTaskExecution() {
              hideRecyclerProgressBar();
+
         }
+
+
 
         private void displayRecyclerProgressBar(){
             rv.setVisibility(View.INVISIBLE);
@@ -1151,6 +1406,108 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         private void hideRecyclerProgressBar(){
             recyclerProgressBar.setVisibility(View.INVISIBLE);
             rv.setVisibility(View.VISIBLE);
+        }
+
+        private void sortArticlesByRating() {
+            //sort by rating and notify data set change for msectionadapter
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Ratings").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    RVAdapter theAdapter = (RVAdapter) rv.getAdapter();
+                    ArrayList<Article> articles = new ArrayList<Article>(theAdapter.getArticlesFromAdapter());
+                    Map<Double,ArrayList<Article>> articlesTreeMap;
+                    articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                    for(Article a : articles) {
+                        DataSnapshot ratingArticleSnapShot = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                                ratingArticleSnapShot = snapshot;
+                                break;
+                            }
+                        }
+                        Double rating = 0.0;
+                        if (ratingArticleSnapShot != null) {
+                            int totalVoteCount = 0, weightedSum = 0;
+                            for(int i=1 ;i<=5 ;i++) {
+                                int numberOfVotes = Integer.parseInt(ratingArticleSnapShot.child("Votes").child(String.valueOf(i)).getValue().toString());
+                                weightedSum += (i * numberOfVotes);
+                                totalVoteCount += numberOfVotes;
+                            }
+                            rating = ((double) weightedSum) / ((double) totalVoteCount);
+                        }
+                        if(!articlesTreeMap.containsKey(rating)) {
+                            articlesTreeMap.put(rating, new ArrayList<Article>());
+                        }
+                        articlesTreeMap.get(rating).add(a);
+                    }
+
+                    articles.clear();
+                    for(Map.Entry<Double,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                        ArrayList<Article> list = entry.getValue();
+                        articles.addAll(list);
+                    }
+                    theAdapter.setArticlesInAdapter(articles);
+                    theAdapter.notifyDataSetChanged();
+                    materialDesignFAM.close(true);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
+        }
+
+        private  void sortArticleByViews() {
+            //sort by views and notify data set change for msectionPagerAdapter
+            final DatabaseReference database;
+            database = FirebaseDatabase.getInstance().getReference();
+
+            database.child("Views").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    RVAdapter theAdapter = (RVAdapter) rv.getAdapter();
+                    ArrayList<Article> articles = new ArrayList<Article>(theAdapter.getArticlesFromAdapter());
+                    Map<Integer,ArrayList<Article>> articlesTreeMap;
+                    articlesTreeMap = new TreeMap<>(Collections.reverseOrder());
+                    for(Article a : articles) {
+                        DataSnapshot viewArticleSnapShot = null;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            if (a.getLink() != null && a.getLink() != "" && snapshot.child("Link").getValue().equals(a.getLink())) {
+                                viewArticleSnapShot = snapshot;
+                                break;
+                            }
+                        }
+                        int views = 0;
+                        if (viewArticleSnapShot != null) {
+                            views = Integer.parseInt(viewArticleSnapShot.child("Count").getValue().toString());
+                        }
+                        if(!articlesTreeMap.containsKey(views)) {
+                            articlesTreeMap.put(views, new ArrayList<Article>());
+                        }
+                        articlesTreeMap.get(views).add(a);
+                    }
+
+                    articles.clear();
+                    for(Map.Entry<Integer,ArrayList<Article>> entry : articlesTreeMap.entrySet()) {
+                        ArrayList<Article> list = entry.getValue();
+                        articles.addAll(list);
+                    }
+                    theAdapter.setArticlesInAdapter(articles);
+                    theAdapter.notifyDataSetChanged();
+                    materialDesignFAM.close(true);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Login DbError Msg ->", d.getMessage());
+                    Log.d("Login DbError Detail ->", d.getDetails());
+                }
+            });
         }
     }
 
@@ -1295,4 +1652,40 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         mainProgressBar.setVisibility(View.INVISIBLE);
         mViewPager.setVisibility(View.VISIBLE);
     }
+
+
+    private void displayReadLaterDefaultScreen(){
+        readLaterDefaultText.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+        ActionBar theBar = getSupportActionBar();
+        if(theBar!=null) {
+            theBar.setTitle("Read Later");
+        }
+        isReadLaterDefaultScreenActive = true;
+    }
+
+    private void hideReadLaterDefaultScreen(){
+        readLaterDefaultText.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
+        isReadLaterDefaultScreenActive = false;
+    }
+
+    private void displaySuggestFeedDefaultScreen(){
+        suggestFeedsDefaultView.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+        ActionBar theBar = getSupportActionBar();
+        if(theBar!=null){
+            theBar.setTitle("Suggested Feeds");
+        }
+        isSuggestFeedDefaultScreenActive = true;
+
+    }
+
+    private void hideSuggestFeedDefaultScreen(){
+        suggestFeedsDefaultView.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
+        isSuggestFeedDefaultScreenActive = false;
+    }
+
+
 }

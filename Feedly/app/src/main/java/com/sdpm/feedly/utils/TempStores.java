@@ -2,11 +2,11 @@ package com.sdpm.feedly.utils;
 
 import android.app.Application;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.model.Feed;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by clinton on 11/8/17.
@@ -15,6 +15,8 @@ import com.sdpm.feedly.model.Feed;
 public class TempStores extends Application {
 
     private static List<Article> theFeeds;
+
+
 
 
     private static HashMap<Integer,Article> articleHashMap = new HashMap<>();
@@ -45,5 +47,6 @@ public class TempStores extends Application {
     public static Article getArticle(int id){
         return articleHashMap.get(id);
     }
+
 
 }
