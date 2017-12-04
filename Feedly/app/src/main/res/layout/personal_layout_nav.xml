@@ -9,7 +9,6 @@
     android:layout_height="wrap_content"
     android:paddingTop="25dp"
     android:orientation="vertical"
-    style="?navBackground"
     android:background="#D3D3D3">
 
 
@@ -60,7 +59,7 @@
             android:layout_margin="15dp"
             android:background="@drawable/side_nav_button"
             android:text="Edit Content"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="#fff"
             android:layout_marginBottom="10dp"/>
 
         <TextView
@@ -83,9 +82,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="15dp"
-            android:background="@drawable/side_nav_button"
+            android:background="@color/warn_btn"
             android:text="LOGOUT"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="#ffff"
             android:layout_marginBottom="10dp"/>
 
     </LinearLayout>

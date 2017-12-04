@@ -26,7 +26,7 @@ public class SignUpActivity extends AppCompatActivity {
     // setting registration success to false as default
     boolean success = false;
     boolean existingUser = false;
-    public static final String NEW_USER_KEY="newUser";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,7 +124,7 @@ public class SignUpActivity extends AppCompatActivity {
 //                                edit.putString("email",email);
 //                                edit.commit();
                                 Intent intent = new Intent(SignUpActivity.this, UserInterestsActivity.class);
-                                intent.putExtra(NEW_USER_KEY,new User(fullname,email,password,null));
+                                intent.putExtra(UserInterestsActivity.NEW_USER_KEY,new User(fullname,email,password,null));
                                 startActivity(intent);
                             }
                         }

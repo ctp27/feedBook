@@ -17,6 +17,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +25,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -52,6 +54,7 @@ import com.sdpm.feedly.adapters.ExpandableListAdapter;
 import com.sdpm.feedly.adapters.RVAdapter;
 import com.sdpm.feedly.bgtasks.DownloadNewsTask;
 import com.sdpm.feedly.bgtasks.DownloadXml;
+import com.sdpm.feedly.bgtasks.SuggestedFeedsTask;
 import com.sdpm.feedly.model.Article;
 import com.sdpm.feedly.model.Feed;
 import com.sdpm.feedly.model.User;
@@ -70,7 +73,8 @@ import java.util.TreeMap;
 
 public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener,
         DownloadNewsTask.DownloadNewsTaskListener,
-        FeedlyLocationListener.LocationChangedListener{
+        FeedlyLocationListener.LocationChangedListener,
+        SuggestedFeedsTask.SuggestedFeedsTaskListener{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -89,6 +93,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     public static final String READ_LATER = "readLaterr";
     public static final String LOCAL_NEWS = "theLocalNews";
     public static final String INDIVIDUAL_FEED = "individualFeed";
+    private boolean isReadLaterDefaultScreenActive = false;
+    private boolean isSuggestFeedDefaultScreenActive = false;
+    private boolean isReturningFromInterests = false;
 
     private static String defaultFeed;
 
@@ -127,6 +134,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Toolbar toolbar;
     private TextView todaysDefaultText;
     private ProgressBar mainProgressBar;
+    private LinearLayout suggestFeedsDefaultView;
+    private Button inputInterestBtn;
+    private TextView readLaterDefaultText;
+
+
 
     private LinearLayout navDrawerLayout;
     private LinearLayout editContentLayout;
@@ -142,7 +154,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         setContentView(R.layout.activity_no_login_side_nav);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Log.d(TAG,"OnCreate");
 
+        if(getIntent().hasExtra(UserInterestsActivity.IS_RETURN_FROM_INTERESTS)){
+            if(getIntent().getBooleanExtra(UserInterestsActivity.IS_RETURN_FROM_INTERESTS,false)){
+                isReturningFromInterests = true;
+            }
+        }
         /*  Get location manager instance */
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -154,7 +172,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
-
+        
         prepareData();
 
         /* Initializes all widgets */
@@ -163,8 +181,74 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
 
     /**
+     * This method handles the click events for the first five items in the
+     * navigation drawer i.e Personal Feeds, Explore Feeds, Read Later, Suggested Feeds and
+     * Local News. The appropriate methods are called for each click event. The event is identified
+     * by the position parameter passed to this method.
+     * @param position the postition of the list element in the NavDrawer
+     */
+    private void onNavDrawerClickAction(int position) {
+
+        if(isReadLaterDefaultScreenActive){
+            hideReadLaterDefaultScreen();
+        }
+        else if(isSuggestFeedDefaultScreenActive){
+            hideSuggestFeedDefaultScreen();
+        }
+        switch (position){
+            case 0:
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                if(defaultFeed.equals(EXPLORE_FEED)){
+                    displayPersonalFeeds();
+                }
+                else if(defaultFeed.equals(TODAYS_FEED)){
+
+                }
+                else{
+                    theFeeds = cachedFeeds;
+                    displayPersonalFeeds();
+                }
+                break;
+            case 1: // Read Later
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                displayReadLaterArticle();
+                break;
+            case 2: //explore
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
+                    theFeeds = exploreFeeds;
+                    if (theFeeds != null) {
+                        mSectionsPagerAdapter.notifyDataSetChanged();
+                        getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
+                    }
+                }else {
+                    defaultFeed = EXPLORE_FEED;
+                    prepareData();
+                }
+                break;
+            case 3:
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                if(defaultFeed.equals(EXPLORE_FEED)) {
+                    displaySuggestedFeeds();
+                }
+                else if(defaultFeed.equals(SUGGESTED_FEED)){
+                }
+                else {
+                    theFeeds = cachedFeeds;
+                    displaySuggestedFeeds();
+                }
+                break;
+            case 4:
+                Log.d(TAG,"Current Tag is "+ defaultFeed);
+                displayNewsFeed();
+                break;
+        }
+        drawer.closeDrawer(Gravity.LEFT);
+    }
+
+    /**
      * Main method responsible for displaying feeds based on user suggestions
-     * Gets user preferences from database
+     * Gets user preferences from database.
      */
     private void displaySuggestedFeeds() {
 
@@ -181,42 +265,39 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     }
                 }
                 if(preferences!=null) {
-                    List<Feed> tempFeeds = theFeeds;
-                    Feed suggestedFeed = new Feed("Suggested Feeds",DownloadXml.SUGGESTED_FEEDS,"","",null);
-                    ArrayList<Article> suggestedFeedArticles = new ArrayList<>();
-                    for(Feed f: tempFeeds){
-                        if(preferences.contains(f.getCategory())){
-                            suggestedFeedArticles.add(f.getArticleList().get(0));
-                        }
-//                        Log.d(TAG,f.getCategory());
-                    }
-                    suggestedFeed.setArticleList(suggestedFeedArticles);
-                    theFeeds.clear();
-                    theFeeds.add(suggestedFeed);
-
-                    if(mSectionsPagerAdapter != null){
-                        mSectionsPagerAdapter.notifyDataSetChanged();
-                        getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
-                    } else {
-                        LoadDataOnScreen();
-                    }
-                    defaultFeed = SUGGESTED_FEED;
+                    showMainProgressBar();
+                    new SuggestedFeedsTask(HomeNav.this,preferences).execute(theFeeds);
                 }
                 else{
-                    //TODO: show message that no preferences were selected
-                    Log.d(TAG,"NO preferences found");
+                    /*  No preferences found   */
+                    /* Show default screen asking to select preferences */
+                    displaySuggestFeedDefaultScreen();
                 }
-                // TODO: Call load data on screen here
             }
-
             @Override
             public void onCancelled(DatabaseError databaseError) {
 
             }
         });
-
     }
 
+    @Override
+    public void onPostExecuteSuggestionsTask(Feed suggestedFeed) {
+        theFeeds.clear();
+        theFeeds.add(suggestedFeed);
+        if(mSectionsPagerAdapter != null){
+            mSectionsPagerAdapter.notifyDataSetChanged();
+        } else {
+            LoadDataOnScreen();
+        }
+        getSupportActionBar().setTitle("Suggested Feeds");
+        defaultFeed = SUGGESTED_FEED;
+        hideMainProgressBar();
+
+        if(isReturningFromInterests){
+            isReturningFromInterests = false;
+        }
+    }
 
     /**
      * MAIN METHOD to call to DISPLAY LOCAL NEWS for the user's location. It starts
@@ -259,7 +340,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
         }
 
-        defaultFeed = LOCAL_NEWS;
+
     }
 
     /**
@@ -282,6 +363,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /*  Request location updates from GPS   */
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, locationListener);
+        defaultFeed = LOCAL_NEWS;
     }
 
 
@@ -369,21 +451,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
 
-    /**
-     * This method is called whenever the activity is resumed from the stack. For example, when
-     * coming back to this activity from another activity
-     */
-    @Override
-    public void onResume(){
-        super.onResume();
-        if(resumeFromSearch) {
-            createExpandableListOfPersonalFeeds();
-            resumeFromSearch = false;
-        } else if(theFeeds != null){
-            createListOfPersonalBoard();
-        }
-
-    }
 
     /**
      * Private method responsible for filtering out the personal feeds from the default feed list.
@@ -411,6 +478,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     }
 
+
     /**
      * Initializes Widgets and their respective click listeners
      */
@@ -426,6 +494,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
         addSourceBtn = (Button) findViewById(R.id.add_content_button);
         logoutBtn = (Button) findViewById(R.id.logout_button);
+        suggestFeedsDefaultView = (LinearLayout) findViewById(R.id.suggest_feeds_default_msg);
+        inputInterestBtn = (Button) findViewById(R.id.input_interests_btn);
+        readLaterDefaultText = (TextView) findViewById(R.id.read_later_default_msg);
+
+        inputInterestBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeNav.this,UserInterestsActivity.class);
+                intent.putExtra(UserInterestsActivity.EXISTING_USER_EMAIL,email);
+                startActivity(intent);
+            }
+        });
 
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -572,56 +652,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         ListView lv = (ListView) findViewById(R.id.default_nav_list);
         DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(lv);
+
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (position){
-                    case 0:
-                        Log.d(TAG,"Current Tag is "+ defaultFeed);
-                        if(defaultFeed.equals(EXPLORE_FEED)){
-                            displayPersonalFeeds();
-                        }
-                        else if(defaultFeed.equals(TODAYS_FEED)){
-
-                        }
-                        else{
-                            theFeeds = cachedFeeds;
-                            displayPersonalFeeds();
-                        }
-                        break;
-                    case 1: // Read Later
-                        Log.d(TAG,"Current Tag is "+ defaultFeed);
-                        displayReadLaterArticle();
-                        break;
-                    case 2: //explore
-                        Log.d(TAG,"Current Tag is "+ defaultFeed);
-                        if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
-                            theFeeds = exploreFeeds;
-                            if (theFeeds != null) {
-                                mSectionsPagerAdapter.notifyDataSetChanged();
-                                getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
-                            }
-                        }else {
-                            defaultFeed = EXPLORE_FEED;
-                            prepareData();
-                        }
-                        break;
-                    case 3:
-                        Log.d(TAG,"Current Tag is "+ defaultFeed);
-                            if(defaultFeed.equals(EXPLORE_FEED)) {
-                                displaySuggestedFeeds();
-                            }
-                            else if(defaultFeed.equals(SUGGESTED_FEED)){
-                            }
-                            else {
-                                theFeeds = cachedFeeds;
-                                displaySuggestedFeeds();
-                            }
-                        break;
-                    case 4:
-                            Log.d(TAG,"Current Tag is "+ defaultFeed);
-                            displayNewsFeed();
-                }
+                /*  Method which handles click events of the NavDrawer list */
+                onNavDrawerClickAction(position);
             }
         });
 
@@ -744,7 +780,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     }
 
 
-
     public void  prepareData(){
         exploreFeeds = new ArrayList<>();
         database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -758,11 +793,16 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
                     cachedFeeds = exploreFeeds;
+                    if(isReturningFromInterests){
+                        displaySuggestedFeeds();
+                        return;
+                    }
                     LoadDataOnScreen();
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
                         createListOfPersonalBoard();
                     }
+
                 }
             }
 
@@ -803,11 +843,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         LoadDataOnScreen();
                     }
                     getSupportActionBar().setTitle(theFeeds.get(0).getCategory());
-
                 }
                 else{
-
-//                    TODO: Display message showing that this page shows READ LATER
+                    /*   COMPLETED: Display message showing that this page shows READ LATER  */
+                    displayReadLaterDefaultScreen();
                 }
                 defaultFeed = READ_LATER;
             }
@@ -897,6 +936,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         displayPersonalFeeds();
                         defaultFeed =TODAYS_FEED;
                     }
+
                 }
             }
 
@@ -906,6 +946,53 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 Log.d("Login DbError Detail ->", d.getDetails());
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG,"onPause");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG,"OnStart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG,"OnStop");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG,"onSavedInstanceState");
+    }
+
+    /**
+     * This method is called whenever the activity is resumed from the stack. For example, when
+     * coming back to this activity from another activity
+     */
+    @Override
+    public void onResume(){
+        super.onResume();
+        Log.d(TAG,"onResume");
+        if(resumeFromSearch) {
+            createExpandableListOfPersonalFeeds();
+            resumeFromSearch = false;
+        } else if(theFeeds != null){
+            createListOfPersonalBoard();
+        }
+
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG,"onRestart");
     }
 
     public void createListOfPersonalBoard() {
@@ -1021,9 +1108,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         FloatingActionMenu materialDesignFAM;
         com.github.clans.fab.FloatingActionButton floatingActionButtonSortByRating, floatingActionButtonSortByView;
 
-        public PlaceholderFragment() {
 
-        }
 
         /**
          * Returns a new instance of this fragment for the given section
@@ -1119,6 +1204,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         @Override
         public void beforeDownloadTask() {
             displayRecyclerProgressBar();
+
         }
 
         /**
@@ -1127,7 +1213,10 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         @Override
         public void postTaskExecution() {
              hideRecyclerProgressBar();
+
         }
+
+
 
         private void displayRecyclerProgressBar(){
             rv.setVisibility(View.INVISIBLE);
@@ -1382,6 +1471,40 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private void hideMainProgressBar(){
         mainProgressBar.setVisibility(View.INVISIBLE);
         mViewPager.setVisibility(View.VISIBLE);
+    }
+
+
+    private void displayReadLaterDefaultScreen(){
+        readLaterDefaultText.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+        ActionBar theBar = getSupportActionBar();
+        if(theBar!=null) {
+            theBar.setTitle("Read Later");
+        }
+        isReadLaterDefaultScreenActive = true;
+    }
+
+    private void hideReadLaterDefaultScreen(){
+        readLaterDefaultText.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
+        isReadLaterDefaultScreenActive = false;
+    }
+
+    private void displaySuggestFeedDefaultScreen(){
+        suggestFeedsDefaultView.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.INVISIBLE);
+        ActionBar theBar = getSupportActionBar();
+        if(theBar!=null){
+            theBar.setTitle("Suggested Feeds");
+        }
+        isSuggestFeedDefaultScreenActive = true;
+
+    }
+
+    private void hideSuggestFeedDefaultScreen(){
+        suggestFeedsDefaultView.setVisibility(View.INVISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
+        isSuggestFeedDefaultScreenActive = false;
     }
 
 

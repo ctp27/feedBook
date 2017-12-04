@@ -29,6 +29,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     public static final String READLATER = "Read Later";
     public static final String PERSONALBOARD = "Personal Board";
     public static final String SUGGESTED_FEEDS= "Suggested Feeds";
+    public static int counter = 0;
 
     private RecyclerView recyclerView;
     private String action;
@@ -120,7 +121,6 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
     @Override
     protected void onPostExecute(Feed theFeed) {
         super.onPostExecute(theFeed);
-
         switch (action) {
 
             case DownloadXml.EXPLORE_FEEDS:
@@ -139,6 +139,9 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
                 displaySuggestedFeeds(theFeed);
             default:
         }
+      
+      
+
     }
 
     private void displaySuggestedFeeds(Feed theFeed) {
@@ -158,7 +161,7 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     @Override
     protected Feed doInBackground(Feed... params) {
-
+      
         Feed theFeed = params[0];
         if(this.action.equals(DownloadXml.EXPLORE_FEEDS)) {
             String s = ConnectionUtils.downloadXML(theFeed.getLink());
@@ -173,7 +176,9 @@ public class DownloadXml extends AsyncTask<Feed,Void, Feed>  {
 
     @Override
     protected void onPreExecute() {
-        theListener.beforeDownloadTask();
+
+            theListener.beforeDownloadTask();
+       
     }
 }
 
