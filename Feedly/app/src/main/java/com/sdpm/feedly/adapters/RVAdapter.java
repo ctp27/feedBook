@@ -130,7 +130,11 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
         }else {
             if (HtmlParseUtils.containsHtml(tempDesc)) {
 //             * If html then do this
-                holder.feedDesc.setText(HtmlParseUtils.getPartialDescription(tempDesc,title));
+                String descriptionText = HtmlParseUtils.getPartialDescription(tempDesc,title);
+                if(descriptionText.equals(""))
+                    holder.feedDesc.setVisibility(View.GONE);
+                else
+                    holder.feedDesc.setText(descriptionText);
             } else {
 //             * If Not html then do this
                 if (tempDesc.length() + title.length()<=HtmlParseUtils.DESC_LENGTH) {
@@ -138,7 +142,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
                 } else {
                     int difference = HtmlParseUtils.DESC_LENGTH -title.length();
                     if(difference<=0){
-                        holder.feedDesc.setText(Html.fromHtml(""));
+                        holder.feedDesc.setVisibility(View.GONE);
                     }
                     else {
                         holder.feedDesc.setText(Html.fromHtml(tempDesc.substring(0,difference)));
