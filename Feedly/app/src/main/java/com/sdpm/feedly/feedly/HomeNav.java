@@ -111,7 +111,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION=0;
     DatabaseReference database;
     private ArrayList<Feed> theFeeds;
-    private ArrayList<Feed> cachedFeeds;
     private ArrayList<Feed> exploreFeeds;
     String email = "";
     ExpandableListAdapter expListAdapter = null;
@@ -205,7 +204,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
                 }
                 else{
-                    theFeeds = cachedFeeds;
+                    theFeeds = exploreFeeds;
                     displayPersonalFeeds();
                 }
                 break;
@@ -213,7 +212,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 displayReadLaterArticle();
                 break;
             case 2: //explore
-                Log.d(TAG,"Current Tag is "+ defaultFeed);
                 if(defaultFeed.equalsIgnoreCase(EXPLORE_FEED)) {
                     theFeeds = exploreFeeds;
                     if (theFeeds != null) {
@@ -226,13 +224,20 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                         getSupportActionBar().setTitle(theFeeds.get(0).getCategory() + "/" + theFeeds.get(0).getName());
                     }
                 }else {
-                    defaultFeed = EXPLORE_FEED;
                     prepareData();
                 }
+                defaultFeed = EXPLORE_FEED;
                 break;
             case 3:
-                if(!defaultFeed.equals(SUGGESTED_FEED)){
-                    displaySuggestedFeeds();
+                if(!defaultFeed.equals(SUGGESTED_FEED)) {
+                    if (defaultFeed.equals(READ_LATER) || defaultFeed.equals(PERSONAL_BOARD)
+                            || defaultFeed.equals(LOCAL_NEWS)){
+                        theFeeds = exploreFeeds;
+                        displaySuggestedFeeds();
+                    }
+                    else{
+                        displaySuggestedFeeds();
+                    }
                 }
                 break;
             case 4:
@@ -261,6 +266,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     }
                 }
                 if(preferences!=null) {
+                    Log.d(TAG,"in here");
                     showMainProgressBar();
                     new SuggestedFeedsTask(HomeNav.this,preferences).execute(theFeeds);
                 }
@@ -269,6 +275,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     /* Show default screen asking to select preferences */
                     hideMainProgressBar();
                     displaySuggestFeedDefaultScreen();
+                    defaultFeed = SUGGESTED_FEED;
                 }
             }
             @Override
@@ -286,7 +293,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      */
     @Override
     public void onPostExecuteSuggestionsTask(Feed suggestedFeed) {
-        theFeeds.clear();
+        theFeeds=new ArrayList<>();
         theFeeds.add(suggestedFeed);
         if(mSectionsPagerAdapter != null){
             mSectionsPagerAdapter.notifyDataSetChanged();
@@ -366,7 +373,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /*  Request location updates from GPS   */
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0, locationListener);
-        defaultFeed = LOCAL_NEWS;
+
     }
 
 
@@ -417,6 +424,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             /*  Hide the loading screen */
             hideMainProgressBar();
         }
+        defaultFeed = LOCAL_NEWS;
     }
 
 
@@ -776,6 +784,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                     LoadDataOnScreen();
                                 }
                                 getSupportActionBar().setTitle(personalBoardList.get(position));
+                                defaultFeed = PERSONAL_BOARD;
                             }
                         }else if(personalBoardList.get(position).equals("My Board")) {
                             Toast.makeText(getApplicationContext(),"No Article stored in personal board", Toast.LENGTH_LONG).show();
@@ -805,7 +814,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if(exploreFeeds != null) {
                     theFeeds = exploreFeeds;
-                    cachedFeeds = exploreFeeds;
 
                     if(!email.equals("")) {
                         createExpandableListOfPersonalFeeds();
