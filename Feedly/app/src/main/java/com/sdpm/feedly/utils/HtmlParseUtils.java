@@ -70,12 +70,12 @@ public class HtmlParseUtils {
             Elements images = theDoc.getElementsByTag("img");
 
             if(images.size()>0){
-                url = images.get(0).attr("src");
+                if(!images.get(0).attr("width").equals("1"))
+                    url = images.get(0).attr("src");
 //                Log.d(TAG, "The url"+url);
             }
 
         }
-
         return url;
     }
 

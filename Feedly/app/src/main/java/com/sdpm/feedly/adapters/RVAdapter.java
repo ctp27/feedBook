@@ -90,8 +90,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
             dateString = "N/A";
         }
 
-        if(author!=null) {
-
+        if(author!=null && !author.trim().isEmpty()) {
             holder.feedInfo.setText("by " + articles.get(position).getAuthor() + " - "+ TimeDateUtils.getTimePassed(context,dateString));
         }
         else{
@@ -123,6 +122,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
     private void setThePartialDescription(FeedViewHolder holder, int position, String title) {
 
         String tempDesc = articles.get(position).getDescription();
+
 
         if(tempDesc==null || tempDesc.isEmpty()){
             holder.feedDesc.setText("");
@@ -164,7 +164,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.FeedViewHolder> {
 
     private void setTheRowImage(FeedViewHolder holder, int position) {
         String thumbnail= articles.get(position).getThumbnailLink();
-        if(thumbnail!=null){
+        if(thumbnail!=null && !thumbnail.trim().isEmpty()){
             Picasso.with(context).load(thumbnail).error(R.drawable.feed)
                         .placeholder(R.drawable.feed)
                         .into(holder.feedImg);

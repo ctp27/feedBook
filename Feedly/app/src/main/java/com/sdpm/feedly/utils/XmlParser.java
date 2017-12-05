@@ -1,14 +1,12 @@
 package com.sdpm.feedly.utils;
 
-import android.util.Log;
+import com.sdpm.feedly.model.Article;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-
-import com.sdpm.feedly.model.Article;
 
 /**
  * Created by clinton on 10/8/17.
@@ -131,9 +129,9 @@ public class XmlParser {
                                 }
                             }
                             else if("encoded".equalsIgnoreCase(tagName)) {
-                                if(prefix.equalsIgnoreCase("content")) {
+//                                if(prefix.equalsIgnoreCase("content")) {
                                     currentRecord.setContent(textValue);
-                                }
+//                                }
                             }
                             else if("thumbnail".equalsIgnoreCase(tagName)) {
                                 currentRecord.setThumbnailLink(xpp.getAttributeValue(null, "url"));
@@ -178,21 +176,34 @@ public class XmlParser {
 
             if (theUrl == null) {
                 String tempDesc = article.getDescription();
+                String tempContent = article.getContent();
                 if (HtmlParseUtils.containsHtml(tempDesc)) {
+//                    Log.d(TAG,article.getTitle()+" contains html");
                     theUrl = HtmlParseUtils.getImageUrlFromDescription(tempDesc);
-                    if(theUrl==null && article.getContent()!=null){
-                        Log.d(TAG,"Article content is not null");
-                        if(HtmlParseUtils.containsHtml(article.getContent())){
-                            Log.d(TAG,"Article contains HTML");
-                            theUrl = HtmlParseUtils.getImageUrlFromDescription(article.getContent());
-                        }
+                    if(theUrl!=null) {
+                        setTheUrl(theUrl, article);
                     }
-                    setTheUrl(theUrl,article);
+                    else{
+                        setImageFromContent(article,theUrl);
+                    }
+                }else{
+                    setImageFromContent(article,theUrl);
                 }
             }else {
                 setTheUrl(theUrl,article);
             }
 
+    }
+
+    private void setImageFromContent(Article article, String theUrl){
+        if(article.getContent()!=null){
+//                        Log.d(TAG,article.getTitle()+"Article content is not null");
+            if(HtmlParseUtils.containsHtml(article.getContent())){
+//                            Log.d(TAG,article.getTitle()+"Article contains HTML in content");
+                theUrl = HtmlParseUtils.getImageUrlFromDescription(article.getContent());
+                setTheUrl(theUrl,article);
+            }
+        }
     }
 
     /**

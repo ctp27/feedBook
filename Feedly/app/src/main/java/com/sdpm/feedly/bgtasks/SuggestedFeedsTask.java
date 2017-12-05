@@ -81,7 +81,7 @@ public class SuggestedFeedsTask extends AsyncTask<List<Feed>,Void,List<Feed>> {
         countMap.put(4,2);
         countMap.put(4,2);
         countMap.put(5,2);
-        countMap.put(6,2);
+        countMap.put(6,1);
 
     }
 }

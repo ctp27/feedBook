@@ -27,7 +27,8 @@ public class TimeDateUtils {
                 df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 startDate = df.parse(theDate);
             }catch (ParseException f){
-                return "Some time ago..";
+                    return "Yesterday";
+
             }
 
 
