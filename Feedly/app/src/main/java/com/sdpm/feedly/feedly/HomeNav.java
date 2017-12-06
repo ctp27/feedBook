@@ -26,11 +26,13 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -42,7 +44,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -179,7 +180,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         /* Sets the Navigation drawer based on logged in state */
         setTheNavDrawer();
-        setSearchDrawer();
+        createSearchDrawer();
 
         prepareData();
 
@@ -657,117 +658,211 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
      * Initializes and sets the Search drawer components
      *
      */
-    private void setSearchDrawer() {
+    private void createSearchDrawer() {
         drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
         searchView = (NavigationView) drawer.findViewById(R.id.search_view);
 
-        ScrollView view = (ScrollView) getLayoutInflater().inflate(R.layout.search_side_layout, null);
 
-        searchView.addView(view);
+        LinearLayout searchingView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_side_layout, null);
+        final LinearLayout searchBtnView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_explore_btns_layout, null);
+        LinearLayout searchSourceListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_sources_layout, null);
+
+        searchView.addView(searchingView);
+
+        final LinearLayout searchScrollView = (LinearLayout) searchingView.findViewById(R.id.search_output_container);
+
+        searchScrollView.addView(searchBtnView);
 
         final ImageButton cookingBtn = (ImageButton) searchView.findViewById(R.id.cooking_btn);
-        final ImageButton foodBtn = (ImageButton) searchView.findViewById(R.id.food_btn);
         final ImageButton gamingBtn = (ImageButton) searchView.findViewById(R.id.gaming_btn);
         final ImageButton cultureBtn = (ImageButton) searchView.findViewById(R.id.culture_btn);
         final ImageButton filmBtn = (ImageButton) searchView.findViewById(R.id.film_btn);
 
         final EditText searchBar = (EditText) searchView.findViewById(R.id.tf_search_bar);
+        final Button clearTextButton = (Button) searchView.findViewById(R.id.search_clear_text_btn);
 
         cookingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setSearchBarText(cookingBtn, searchBar);
-                executeSearch(searchBar);
-            }
-        });
-        foodBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setSearchBarText(foodBtn, searchBar);
-                executeSearch(searchBar);
+                executeSearch(searchBar, searchScrollView, true);
             }
         });
         gamingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setSearchBarText(gamingBtn, searchBar);
-                executeSearch(searchBar);
+                executeSearch(searchBar, searchScrollView, true);
             }
         });
         cultureBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setSearchBarText(cultureBtn, searchBar);
-                executeSearch(searchBar);
+                executeSearch(searchBar, searchScrollView, true);
             }
         });
         filmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setSearchBarText(filmBtn, searchBar);
-                executeSearch(searchBar);
+                executeSearch(searchBar, searchScrollView, true);
+            }
+        });
+
+        clearTextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchBar.setText("");
+                setSearchScrollView(searchScrollView, searchBtnView);
+            }
+        });
+
+        searchBar.setImeActionLabel("Search", KeyEvent.KEYCODE_ENTER);
+        searchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                executeSearch(searchBar, searchScrollView, false);
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(searchBar.getWindowToken(), 0);
+                return false;
             }
         });
 
 
-
     }
+
+    private void setSearchScrollView(LinearLayout viewBase, LinearLayout viewToAdd) {
+        if (viewToAdd.getParent() != viewBase) {
+            viewBase.removeAllViews();
+            viewBase.addView(viewToAdd);
+        }
+    }
+
     private void setSearchBarText(ImageButton btn, EditText searchBar) {
         if (btn.getId() == R.id.cooking_btn) {
-            searchBar.setText("#cooking", TextView.BufferType.EDITABLE);
-        }
-        else if (btn.getId() == R.id.food_btn) {
-            searchBar.setText("#food", TextView.BufferType.EDITABLE);
+            searchBar.setText("#Cooking", TextView.BufferType.EDITABLE);
         }
         else if (btn.getId() == R.id.gaming_btn) {
-            searchBar.setText("#gaming", TextView.BufferType.EDITABLE);
+            searchBar.setText("#Gaming", TextView.BufferType.EDITABLE);
         }
         else if (btn.getId() == R.id.culture_btn) {
-            searchBar.setText("#culture", TextView.BufferType.EDITABLE);
+            searchBar.setText("#Culture", TextView.BufferType.EDITABLE);
         }
         else {
-            searchBar.setText("#film", TextView.BufferType.EDITABLE);
+            searchBar.setText("#Film", TextView.BufferType.EDITABLE);
         }
     }
 
-    private void executeSearch(EditText searchBar) {
+    private void executeSearch(final EditText searchBar, final LinearLayout baseView, boolean buttonSearch) {
         final String text = searchBar.getText().toString();
         final List<String> tagList = new ArrayList<>();
+        final List<String> sourceList = new ArrayList<>();
+
+        final LinearLayout searchSourceListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_sources_layout, null);
+        final LinearLayout searchNotFoundView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_not_found_layout, null);
+        final LinearLayout searchTagListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_tag_layout, null);
+        final ListView sourceLV = searchSourceListView.findViewById(R.id.search_source_list);
+        sourceLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                final String item = (String) sourceLV.getItemAtPosition(position);
+                database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            for (DataSnapshot subSnapShot : snapshot.getChildren()) {
+                                if (subSnapShot.child("name").getValue().toString() == item) {
+                                    ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
+                                    searchFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),"","",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
+                                    theFeeds = searchFeeds;
+                                    LoadDataOnScreen();
+                                    drawer.closeDrawer(Gravity.RIGHT);
+                                    break;
+                                }
+                            }
+                        }
+
+                        LoadDataOnScreen();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+        final ListView tagLV = searchTagListView.findViewById(R.id.search_tag_list);
+        tagLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                final String item = (String) tagLV.getItemAtPosition(position);
+                searchBar.setText(item);
+                executeSearch(searchBar, baseView, true);
+            }
+        });
+
         if (text.startsWith("#") && text.length() > 1) {
-            //search categories
-            database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
-
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Log.d("DATABASETEST", "inside event " + dataSnapshot.getKey().toString());
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        //gives me the name of the category
-                        if (snapshot.getKey().toString().toLowerCase().startsWith(text.toLowerCase().substring(1))) {
-                            Log.d("DATABASETEST", "yes");
-
-                            //add found tags to list
-                            tagList.add("#" + snapshot.getKey().toString().toLowerCase());
+            if (buttonSearch) {
+                database.child("Categories").child(text.substring(1)).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            sourceList.add(snapshot.child("name").getValue().toString());
+                        }
+                        if (sourceList.size() > 0) {
+                            //sources were found from search
+                            sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                            setSearchScrollView(baseView, searchSourceListView);
+                        }
+                        else {
+                            //no sources found from search
+                            setSearchScrollView(baseView, searchNotFoundView);
                         }
                     }
-                    if (tagList.size() == 0) {
-                        //display not found page
-                        Log.d("DATABASETEST","Display not found");
-                    }
-                    else if (tagList.size() == 1){
-                        //display sources for tag
-                        Log.d("DATABASETEST","Display source");
-                    }
-                    else {
-                        //display list of tags
-                    }
-                }
 
-                @Override
-                public void onCancelled(DatabaseError d) {
-                    Log.d("Login DbError Msg ->", d.getMessage());
-                    Log.d("Login DbError Detail ->", d.getDetails());
-                }
-            });
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Search DbError Msg->", d.getMessage());
+                        Log.d("Search DbError Detail->", d.getDetails());
+                    }
+                });
+            }
+            else {
+                //search categories
+                database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Log.d("DATABASETEST", "inside event " + dataSnapshot.getKey().toString());
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            //gives me the name of the category
+                            if (snapshot.getKey().toString().toLowerCase().startsWith(text.toLowerCase().substring(1))) {
+                                Log.d("DATABASETEST", "yes");
+
+                                //add found tags to list
+                                tagList.add("#" + snapshot.getKey().toString());
+                            }
+                        }
+                        if (tagList.size() == 0) {
+                            //display not found page
+                            Log.d("DATABASETEST", "Display not found");
+                            setSearchScrollView(baseView, searchNotFoundView);
+                        } else {
+                            //display list of tags
+                            tagLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, tagList));
+                            setSearchScrollView(baseView, searchTagListView);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError d) {
+                        Log.d("Search DbError Msg->", d.getMessage());
+                        Log.d("Search DbError Detail->", d.getDetails());
+                    }
+                });
+            }
 
         }
         else if (text.length() > 0){
@@ -779,14 +874,27 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         for (DataSnapshot subSnapshot : snapshot.getChildren()) {
+                            if (subSnapshot.child("name").getValue().toString().toLowerCase().startsWith(text.toLowerCase())) {
+                                sourceList.add(subSnapshot.child("name").getValue().toString());
 
+                            }
                         }
+                    }
+                    if (sourceList.size() > 0) {
+                        //sources were found from search
+                        sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                        setSearchScrollView(baseView, searchSourceListView);
+                    }
+                    else {
+                        //no sources found from search
+                        setSearchScrollView(baseView, searchNotFoundView);
                     }
                 }
 
                 @Override
-                public void onCancelled(DatabaseError databaseError) {
-
+                public void onCancelled(DatabaseError d) {
+                    Log.d("Search DbError Msg->", d.getMessage());
+                    Log.d("Search DbError Detail->", d.getDetails());
                 }
             });
         }

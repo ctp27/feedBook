@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="?navBackground">
@@ -12,49 +12,36 @@
         android:layout_marginLeft="15dp"
         android:orientation="vertical" >
 
-        <EditText
-            android:id="@+id/tf_search_bar"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/tf_search_bar"
+                android:maxLines="1"
+                android:inputType="text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:hint="Search"
+                android:drawableStart="@android:drawable/ic_menu_search"/>
+
+            <Button
+                android:id="@+id/search_clear_text_btn"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:background="@android:drawable/ic_menu_close_clear_cancel"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/search_output_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Search"
-            android:drawableStart="@android:drawable/ic_menu_search"/>
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Explore"
-            style="?blackText"/>
 
-        <ImageButton
-            android:id="@+id/cooking_btn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/cooking_edited" />
-
-        <ImageButton
-            android:id="@+id/film_btn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/film_edited" />
-
-        <ImageButton
-            android:id="@+id/gaming_btn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/gaming_edited"/>
-
-        <ImageButton
-            android:id="@+id/food_btn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/food_edited"/>
-
-        <ImageButton
-            android:id="@+id/culture_btn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/culture_edited"/>
-
+        </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+</LinearLayout>
