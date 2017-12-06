@@ -713,8 +713,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         clearTextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                searchBar.setText("");
-                setSearchScrollView(searchScrollView, searchBtnView);
+                if(searchBar.getText().toString().trim().isEmpty()){
+                    drawer.closeDrawer(Gravity.RIGHT);
+                }else{
+                    searchBar.setText("");
+                    setSearchScrollView(searchScrollView, searchBtnView);
+                }
             }
         });
 
@@ -756,7 +760,13 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     public void displaySearch(ArrayList<Feed> searchFeeds) {
         theFeeds = searchFeeds;
-        LoadDataOnScreen();
+        if(mSectionsPagerAdapter!=null){
+            mSectionsPagerAdapter.notifyDataSetChanged();
+        }
+        else {
+            LoadDataOnScreen();
+        }
+        defaultFeed = INDIVIDUAL_FEED;
     }
 
     private void executeSearch(final EditText searchBar, final LinearLayout baseView, boolean buttonSearch) {
@@ -767,7 +777,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         final LinearLayout searchSourceListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_sources_layout, null);
         final LinearLayout searchNotFoundView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_not_found_layout, null);
         final LinearLayout searchTagListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_tag_layout, null);
-        final ListView sourceLV = searchSourceListView.findViewById(R.id.search_source_list);
+        final ListView sourceLV = (ListView) searchSourceListView.findViewById(R.id.search_source_list);
         sourceLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
@@ -777,9 +787,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             for (DataSnapshot subSnapShot : snapshot.getChildren()) {
-                                if (subSnapShot.child("name").getValue().toString() == item) {
+                                if (subSnapShot.child("name").getValue().toString().equals(item)) {
                                     ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
-                                    searchFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),"","",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
+                                    searchFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),snapshot.getKey(),"",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
                                     displaySearch(searchFeeds);
                                     drawer.closeDrawer(Gravity.RIGHT);
                                     break;
@@ -797,7 +807,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 });
             }
         });
-        final ListView tagLV = searchTagListView.findViewById(R.id.search_tag_list);
+        final ListView tagLV = (ListView)searchTagListView.findViewById(R.id.search_tag_list);
         tagLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
