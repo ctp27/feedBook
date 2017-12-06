@@ -505,15 +505,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         editFeedContentBtn = (Button) findViewById(R.id.edit_content_button);
         addSourceBtn = (Button) findViewById(R.id.add_content_button);
         logoutBtn = (Button) findViewById(R.id.logout_button);
-        settingsBtn = (Button) findViewById(R.id.settings_button);
 
-        settingsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
-                startActivity(intent);
-            }
-        });
         suggestFeedsDefaultView = (LinearLayout) findViewById(R.id.suggest_feeds_default_msg);
         inputInterestBtn = (Button) findViewById(R.id.input_interests_btn);
         readLaterDefaultText = (TextView) findViewById(R.id.read_later_default_msg);
@@ -754,6 +746,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
     }
 
+    public void displaySearch(ArrayList<Feed> searchFeeds) {
+        theFeeds = searchFeeds;
+        LoadDataOnScreen();
+    }
+
     private void executeSearch(final EditText searchBar, final LinearLayout baseView, boolean buttonSearch) {
         final String text = searchBar.getText().toString();
         final List<String> tagList = new ArrayList<>();
@@ -775,8 +772,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                 if (subSnapShot.child("name").getValue().toString() == item) {
                                     ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
                                     searchFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),"","",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
-                                    theFeeds = searchFeeds;
-                                    LoadDataOnScreen();
+                                    displaySearch(searchFeeds);
                                     drawer.closeDrawer(Gravity.RIGHT);
                                     break;
                                 }
