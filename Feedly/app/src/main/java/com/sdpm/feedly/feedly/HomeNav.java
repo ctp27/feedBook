@@ -766,17 +766,20 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         theFeeds = searchFeeds;
         if(mSectionsPagerAdapter!=null){
             mSectionsPagerAdapter.notifyDataSetChanged();
+            getSupportActionBar().setTitle(theFeeds.get(0).getName());
         }
         else {
             LoadDataOnScreen();
         }
         defaultFeed = INDIVIDUAL_FEED;
+
     }
 
     private void executeSearch(final SearchView searchBar, final LinearLayout baseView, boolean buttonSearch) {
         final String text = searchBar.getQuery().toString();
         final List<String> tagList = new ArrayList<>();
         final List<String> sourceList = new ArrayList<>();
+        final List<Feed> allFeeds = exploreFeeds;
 
         final LinearLayout searchSourceListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_sources_layout, null);
         final LinearLayout searchNotFoundView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_not_found_layout, null);
@@ -786,36 +789,22 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 final String item = (String) sourceLV.getItemAtPosition(position);
-                database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            for (DataSnapshot subSnapShot : snapshot.getChildren()) {
-                                if (subSnapShot.child("name").getValue().toString().equals(item)) {
-                                    ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
-                                    searchFeeds.add(new Feed(subSnapShot.child("name").getValue().toString(),snapshot.getKey(),"",subSnapShot.child("rssLink").getValue().toString(),new ArrayList<Article>()));
-                                    displaySearch(searchFeeds);
-                                    drawer.closeDrawer(Gravity.RIGHT);
-                                    break;
-                                }
-                            }
-                        }
-
-                        LoadDataOnScreen();
+                for(Feed f: allFeeds){
+                    if(f.getName().equals(item)){
+                        ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
+                        searchFeeds.add(f);
+                        displaySearch(searchFeeds);
+                        drawer.closeDrawer(Gravity.RIGHT);
                     }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
+                }
             }
         });
         final ListView tagLV = (ListView)searchTagListView.findViewById(R.id.search_tag_list);
         tagLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                final String item = (String) tagLV.getItemAtPosition(position);
+                String item = (String) tagLV.getItemAtPosition(position);
+                item="#"+item;
                 searchBar.setQuery(item,false);
                 executeSearch(searchBar, baseView, true);
             }
@@ -823,98 +812,62 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         if (text.startsWith("#") && text.length() > 1) {
             if (buttonSearch) {
-                database.child("Categories").child(text.substring(1)).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            sourceList.add(snapshot.child("name").getValue().toString());
-                        }
-                        if (sourceList.size() > 0) {
-                            //sources were found from search
-                            sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
-                            setSearchScrollView(baseView, searchSourceListView);
-                        }
-                        else {
-                            //no sources found from search
-                            setSearchScrollView(baseView, searchNotFoundView);
-                        }
-                    }
 
-                    @Override
-                    public void onCancelled(DatabaseError d) {
-                        Log.d("Search DbError Msg->", d.getMessage());
-                        Log.d("Search DbError Detail->", d.getDetails());
+                for(Feed f: allFeeds){
+                    if(text.substring(1).equals(f.getCategory()) && !sourceList.contains(text.substring(1))){
+                        sourceList.add(f.getName());
                     }
-                });
+                }
+                if (sourceList.size() > 0) {
+                    //sources were found from search
+                    sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                    setSearchScrollView(baseView, searchSourceListView);
+                }
+                else {
+                    //no sources found from search
+                    setSearchScrollView(baseView, searchNotFoundView);
+                }
             }
             else {
                 //search categories
-                database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
-
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        Log.d("DATABASETEST", "inside event " + dataSnapshot.getKey().toString());
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            //gives me the name of the category
-                            if (snapshot.getKey().toString().toLowerCase().startsWith(text.toLowerCase().substring(1))) {
-                                Log.d("DATABASETEST", "yes");
-
-                                //add found tags to list
-                                tagList.add("#" + snapshot.getKey().toString());
-                            }
-                        }
-                        if (tagList.size() == 0) {
-                            //display not found page
-                            Log.d("DATABASETEST", "Display not found");
-                            setSearchScrollView(baseView, searchNotFoundView);
-                        } else {
-                            //display list of tags
-                            tagLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, tagList));
-                            setSearchScrollView(baseView, searchTagListView);
-                        }
+                for(Feed f: allFeeds){
+                    String tempText = text.toLowerCase().substring(1);
+                    if(f.getCategory().toLowerCase().startsWith(tempText)
+                            && !tagList.contains(f.getCategory())){
+                        tagList.add(f.getCategory());
                     }
+                }
+                if (tagList.size() == 0) {
+                    //display not found page
+                    Log.d("DATABASETEST", "Display not found");
+                    setSearchScrollView(baseView, searchNotFoundView);
+                } else {
+                    //display list of tags
+                    tagLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, tagList));
+                    setSearchScrollView(baseView, searchTagListView);
+                }
 
-                    @Override
-                    public void onCancelled(DatabaseError d) {
-                        Log.d("Search DbError Msg->", d.getMessage());
-                        Log.d("Search DbError Detail->", d.getDetails());
-                    }
-                });
             }
 
         }
         else if (text.length() > 0){
             //search source
-            Log.d("DATABASETEST","searching source");
-
-            database.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        for (DataSnapshot subSnapshot : snapshot.getChildren()) {
-                            if (subSnapshot.child("name").getValue().toString().toLowerCase().startsWith(text.toLowerCase())) {
-                                sourceList.add(subSnapshot.child("name").getValue().toString());
-
-                            }
-                        }
-                    }
-                    if (sourceList.size() > 0) {
-                        //sources were found from search
-                        sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
-                        setSearchScrollView(baseView, searchSourceListView);
-                    }
-                    else {
-                        //no sources found from search
-                        setSearchScrollView(baseView, searchNotFoundView);
-                    }
+//            Log.d("DATABASETEST","searching source");
+            for(Feed f: allFeeds ){
+                if(f.getName().toLowerCase().startsWith(text.toLowerCase())){
+                    sourceList.add(f.getName());
                 }
+            }
 
-                @Override
-                public void onCancelled(DatabaseError d) {
-                    Log.d("Search DbError Msg->", d.getMessage());
-                    Log.d("Search DbError Detail->", d.getDetails());
-                }
-            });
+            if (sourceList.size() > 0) {
+                //sources were found from search
+                sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                setSearchScrollView(baseView, searchSourceListView);
+            }
+            else {
+                //no sources found from search
+                setSearchScrollView(baseView, searchNotFoundView);
+            }
         }
         else {
 
