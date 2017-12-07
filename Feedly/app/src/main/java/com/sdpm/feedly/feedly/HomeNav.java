@@ -23,10 +23,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,13 +37,12 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
-import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -669,6 +668,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
         searchView.addView(searchingView);
 
+
         final LinearLayout searchScrollView = (LinearLayout) searchingView.findViewById(R.id.search_output_container);
 
         searchScrollView.addView(searchBtnView);
@@ -678,14 +678,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         final ImageButton cultureBtn = (ImageButton) searchView.findViewById(R.id.culture_btn);
         final ImageButton filmBtn = (ImageButton) searchView.findViewById(R.id.film_btn);
 
-        final EditText searchBar = (EditText) searchView.findViewById(R.id.tf_search_bar);
-        final Button clearTextButton = (Button) searchView.findViewById(R.id.search_clear_text_btn);
-
+        final SearchView searchBar = (SearchView) searchView.findViewById(R.id.tf_search_bar);
+        searchBar.setIconified(false);
         cookingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setSearchBarText(cookingBtn, searchBar);
                 executeSearch(searchBar, searchScrollView, true);
+                searchBar.setIconified(false);
             }
         });
         gamingBtn.setOnClickListener(new View.OnClickListener() {
@@ -710,31 +710,35 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             }
         });
 
-        clearTextButton.setOnClickListener(new View.OnClickListener() {
+
+        searchBar.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
-            public void onClick(View v) {
-                if(searchBar.getText().toString().trim().isEmpty()){
-                    drawer.closeDrawer(Gravity.RIGHT);
-                }else{
-                    searchBar.setText("");
-                    setSearchScrollView(searchScrollView, searchBtnView);
-                }
+            public boolean onClose() {
+                searchBar.setQuery("",false);
+                setSearchScrollView(searchScrollView, searchBtnView);
+                return false;
             }
         });
 
-        searchBar.setImeActionLabel("Search", KeyEvent.KEYCODE_ENTER);
-        searchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        searchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
                 executeSearch(searchBar, searchScrollView, false);
-                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(searchBar.getWindowToken(), 0);
+
                 return false;
             }
         });
 
 
     }
+
 
     private void setSearchScrollView(LinearLayout viewBase, LinearLayout viewToAdd) {
         if (viewToAdd.getParent() != viewBase) {
@@ -743,18 +747,18 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         }
     }
 
-    private void setSearchBarText(ImageButton btn, EditText searchBar) {
+    private void setSearchBarText(ImageButton btn, SearchView searchBar) {
         if (btn.getId() == R.id.cooking_btn) {
-            searchBar.setText("#Cooking", TextView.BufferType.EDITABLE);
+            searchBar.setQuery("#Cooking", false);
         }
         else if (btn.getId() == R.id.gaming_btn) {
-            searchBar.setText("#Gaming", TextView.BufferType.EDITABLE);
+            searchBar.setQuery("#Gaming", false);
         }
         else if (btn.getId() == R.id.culture_btn) {
-            searchBar.setText("#Culture", TextView.BufferType.EDITABLE);
+            searchBar.setQuery("#Culture", false);
         }
         else {
-            searchBar.setText("#Film", TextView.BufferType.EDITABLE);
+            searchBar.setQuery("#Film", false);
         }
     }
 
@@ -769,8 +773,8 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         defaultFeed = INDIVIDUAL_FEED;
     }
 
-    private void executeSearch(final EditText searchBar, final LinearLayout baseView, boolean buttonSearch) {
-        final String text = searchBar.getText().toString();
+    private void executeSearch(final SearchView searchBar, final LinearLayout baseView, boolean buttonSearch) {
+        final String text = searchBar.getQuery().toString();
         final List<String> tagList = new ArrayList<>();
         final List<String> sourceList = new ArrayList<>();
 
@@ -812,7 +816,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 final String item = (String) tagLV.getItemAtPosition(position);
-                searchBar.setText(item);
+                searchBar.setQuery(item,false);
                 executeSearch(searchBar, baseView, true);
             }
         });
@@ -1350,9 +1354,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             case R.id.action_settings:
                 Intent intent = new Intent(HomeNav.this, SettingsActivity.class);
                 startActivity(intent);
-                break;
-            case R.id.action_local_news:
-                displayNewsFeed();
                 break;
             case R.id.action_search:
                 drawer.openDrawer(Gravity.RIGHT);

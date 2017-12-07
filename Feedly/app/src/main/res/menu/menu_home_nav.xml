@@ -12,10 +12,5 @@
         android:icon="@drawable/ic_action_search"
         android:title="@string/action_search"
         app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/action_local_news"
-        android:orderInCategory="101"
-        android:title="@string/local_news"
-        app:showAsAction="never" />
 
 </menu>
