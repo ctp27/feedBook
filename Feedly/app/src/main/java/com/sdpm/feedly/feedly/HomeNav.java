@@ -55,6 +55,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.sdpm.feedly.adapters.CheckboxExpandableListAdapter;
 import com.sdpm.feedly.adapters.ExpandableListAdapter;
 import com.sdpm.feedly.adapters.RVAdapter;
+import com.sdpm.feedly.adapters.SourceListAdapter;
 import com.sdpm.feedly.bgtasks.DownloadNewsTask;
 import com.sdpm.feedly.bgtasks.DownloadXml;
 import com.sdpm.feedly.bgtasks.SuggestedFeedsTask;
@@ -77,7 +78,8 @@ import java.util.TreeMap;
 public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChangeListener,
         DownloadNewsTask.DownloadNewsTaskListener,
         FeedlyLocationListener.LocationChangedListener,
-        SuggestedFeedsTask.SuggestedFeedsTaskListener{
+        SuggestedFeedsTask.SuggestedFeedsTaskListener,
+        SourceListAdapter.SourceListAdapterListener{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -99,6 +101,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private boolean isReadLaterDefaultScreenActive = false;
     private boolean isSuggestFeedDefaultScreenActive = false;
     private boolean isReturningFromInterests = false;
+
 
     private static String defaultFeed;
 
@@ -143,7 +146,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private Button inputInterestBtn;
     private TextView readLaterDefaultText;
     private Button editInterestsBtn;
-
+    private SourceListAdapter theAdapter;
 
 
     private LinearLayout navDrawerLayout;
@@ -553,9 +556,14 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
             @Override
             public void onClick(View v) {
                 resumeFromSearch = true;
-                Intent intent = new Intent(HomeNav.this,AddActivity.class);
-                intent.putExtra("email",email);
-                startActivity(intent);
+//                Intent intent = new Intent(HomeNav.this,AddActivity.class);
+//                intent.putExtra("email",email);
+//                startActivity(intent);
+                if(theAdapter!=null)
+                theAdapter.notifyDataSetChanged();
+                drawer.openDrawer(Gravity.RIGHT);
+                drawer.closeDrawer(Gravity.LEFT);
+//                TODO: add here to open navdrawer
             }
         });
 
@@ -631,6 +639,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                                 expListAdapter.notifyDataSetChanged();
                                 DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
                                 checkboxExpandableListAdapter.notifyDataSetChanged();
+                                if(theAdapter!=null) {
+                                    theAdapter.notifyDataSetChanged();
+                                }
                                 if(defaultFeed.equalsIgnoreCase(TODAYS_FEED)){
                                     displayPersonalFeeds();
                                     defaultFeed = TODAYS_FEED;
@@ -660,7 +671,6 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
     private void createSearchDrawer() {
         drawer = (DrawerLayout) findViewById(R.id.no_login_drawer_layout);
         searchView = (NavigationView) drawer.findViewById(R.id.search_view);
-
 
         LinearLayout searchingView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_side_layout, null);
         final LinearLayout searchBtnView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_explore_btns_layout, null);
@@ -785,20 +795,21 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         final LinearLayout searchNotFoundView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_not_found_layout, null);
         final LinearLayout searchTagListView = (LinearLayout) getLayoutInflater().inflate(R.layout.search_tag_layout, null);
         final ListView sourceLV = (ListView) searchSourceListView.findViewById(R.id.search_source_list);
-        sourceLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                final String item = (String) sourceLV.getItemAtPosition(position);
-                for(Feed f: allFeeds){
-                    if(f.getName().equals(item)){
-                        ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
-                        searchFeeds.add(f);
-                        displaySearch(searchFeeds);
-                        drawer.closeDrawer(Gravity.RIGHT);
-                    }
-                }
-            }
-        });
+//        sourceLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+//                final String item = (String) sourceLV.getItemAtPosition(position);
+//                for(Feed f: allFeeds){
+//                    if(f.getName().equals(item)){
+//                        ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
+//                        searchFeeds.add(f);
+//                        displaySearch(searchFeeds);
+//                        drawer.closeDrawer(Gravity.RIGHT);
+//                        break;
+//                    }
+//                }
+//            }
+//        });
         final ListView tagLV = (ListView)searchTagListView.findViewById(R.id.search_tag_list);
         tagLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -820,7 +831,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 }
                 if (sourceList.size() > 0) {
                     //sources were found from search
-                    sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                    theAdapter = new SourceListAdapter(this,R.layout.add_source_subrow,
+                                    sourceList,personalCategoriesList,personalFeedsUnderCategory
+                                    ,this,exploreFeeds);
+//                    sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                    sourceLV.setAdapter(theAdapter);
                     setSearchScrollView(baseView, searchSourceListView);
                 }
                 else {
@@ -842,6 +857,7 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     Log.d("DATABASETEST", "Display not found");
                     setSearchScrollView(baseView, searchNotFoundView);
                 } else {
+
                     //display list of tags
                     tagLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, tagList));
                     setSearchScrollView(baseView, searchTagListView);
@@ -861,7 +877,11 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
             if (sourceList.size() > 0) {
                 //sources were found from search
-                sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                theAdapter = new SourceListAdapter(this,R.layout.add_source_subrow,
+                        sourceList,personalCategoriesList,personalFeedsUnderCategory
+                        ,this,exploreFeeds);
+//                sourceLV.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, sourceList));
+                sourceLV.setAdapter(theAdapter);
                 setSearchScrollView(baseView, searchSourceListView);
             }
             else {
@@ -872,6 +892,25 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
         else {
 
         }
+    }
+
+    @Override
+    public void onAddSource() {
+        theAdapter.notifyDataSetChanged();
+        defaultFeed = TODAYS_FEED;
+        expListAdapter.notifyDataSetChanged();
+        checkboxExpandableListAdapter.notifyDataSetChanged();
+        DynamicLayoutUtils.justifyListViewHeightBasedOnChildren(expListView);
+        displayPersonalFeeds();
+    }
+
+    @Override
+    public void onSourceViewClick(Feed f) {
+        ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
+        searchFeeds.add(f);
+        displaySearch(searchFeeds);
+        drawer.closeDrawer(Gravity.RIGHT);
+
     }
 
     /**
@@ -1169,6 +1208,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                     }
 
                     if (personalCategoriesList.size() != 0 && personalFeedsUnderCategory.size() != 0) {
+                        if(theAdapter!=null) {
+                            theAdapter.notifyDataSetChanged();
+                        }
                         if(expListAdapter != null && checkboxExpandableListAdapter != null) {
                             expListAdapter.notifyDataSetChanged();
                             checkboxExpandableListAdapter.notifyDataSetChanged();
@@ -1309,6 +1351,9 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
                 startActivity(intent);
                 break;
             case R.id.action_search:
+                if(theAdapter!=null) {
+                    theAdapter.notifyDataSetChanged();
+                }
                 drawer.openDrawer(Gravity.RIGHT);
                 break;
             default:
