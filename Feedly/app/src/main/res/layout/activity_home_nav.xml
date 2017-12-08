@@ -78,6 +78,39 @@
         android:visibility="invisible"
         />
 
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:id="@+id/today_default_view"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/todays_default_msg"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:padding="5dp"
+            />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:id="@+id/default_add_src_btn"
+            android:text="@string/default_add_source_btn_text"
+            android:background="@color/feedly_grren"
+            android:textColor="#fff"
+            android:padding="10dp"/>
+
+    </LinearLayout>
+
+
+
     <android.support.v4.view.ViewPager
         android:id="@+id/container"
         android:layout_width="match_parent"

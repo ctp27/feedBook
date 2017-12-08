@@ -137,7 +137,7 @@ public class feed_desc extends AppCompatActivity  implements ViewPager.OnPageCha
         mViewPager.setCurrentItem(position);
 
         int limit = (mSectionsPagerAdapter.getCount() > 1 ? mSectionsPagerAdapter.getCount() - 1 : 1);
-        //mViewPager.setOffscreenPageLimit(limit);
+        mViewPager.setOffscreenPageLimit(limit);
     }
 
     @Override

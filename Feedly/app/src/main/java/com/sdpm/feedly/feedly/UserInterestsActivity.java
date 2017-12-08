@@ -176,6 +176,7 @@ public class UserInterestsActivity extends AppCompatActivity {
                 if(persisted){
                     Intent intent = new Intent(UserInterestsActivity.this,HomeNav.class);
                     intent.putExtra(IS_RETURN_FROM_INTERESTS,true);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                     }
 

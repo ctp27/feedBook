@@ -63,20 +63,20 @@ public class SignUpActivity extends AppCompatActivity {
                 }
 
                 // Checking if fullname is empty
-                else if (TextUtils.isEmpty(fullname)) {
+                else if (fullname.trim().isEmpty()) {
                     Toast.makeText(getApplicationContext(), "You did not enter your name", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
 
                 // Checking if email is empty
-                else if (TextUtils.isEmpty(email)){
+                else if (email.trim().isEmpty()){
                     Toast.makeText(getApplicationContext(), "You did not enter the email-ID", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;
                 }
                 // Checking if password is empty
-                else if (TextUtils.isEmpty(password)){
+                else if (password.trim().isEmpty()){
                     Toast.makeText(getApplicationContext(), "You did not enter a password", Toast.LENGTH_SHORT).show();
                     success=false;
                     return;

@@ -2,9 +2,11 @@ package com.sdpm.feedly.feedly;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,9 +45,41 @@ public class LoginActivity extends AppCompatActivity {
                 final String password = et_password.getText().toString();
                 Log.d("tag",emailId);
                 Log.d("tag",password);
-                if(emailId.equals("") || password.equals("")){
-                    Toast.makeText(getApplicationContext(),"Enter Valid Email Id and Password",Toast.LENGTH_SHORT).show();
-                } else {
+                boolean success= false;
+                if(TextUtils.isEmpty(emailId) && TextUtils.isEmpty(password)){
+                    Toast.makeText(getApplicationContext(), "Please enter your details", Toast.LENGTH_SHORT).show();
+                    success=false;
+                    return;
+                }
+
+                // Checking if fullname is empty
+                else if (emailId.trim().isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "You did not enter your name", Toast.LENGTH_SHORT).show();
+                    success=false;
+                    return;
+                }
+                // Checking if password is empty
+                else if (password.trim().isEmpty()){
+                    Toast.makeText(getApplicationContext(), "You did not enter a password", Toast.LENGTH_SHORT).show();
+                    success=false;
+                    return;
+                }
+                // All fields are present
+                else{
+
+                    // Checking if email Id is valid
+                    if (Patterns.EMAIL_ADDRESS.matcher(emailId).matches()){
+                        success = true;
+                    }
+
+                    // Registration is successful; changing success to true
+                    else {
+                        Toast.makeText(getApplicationContext(), "Please enter valid Email Id", Toast.LENGTH_SHORT).show();
+                        success=false;
+                    }
+                }
+
+                if(success) {
                     isValidUser = false;
                     database.child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override

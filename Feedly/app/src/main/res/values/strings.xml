@@ -159,6 +159,8 @@
     <string name="suggest_default_msg">Let us know your interests to help suggest some articles for you.</string>
     <string name="select_interests">Select Interests</string>
     <string name="readlater_default_msg">The articles you mark as read later will appear here. You currently have no articles to read</string>
+    <string name="todays_default_msg">You currently have no personal feeds. Add your first source!</string>
+    <string name="default_add_source_btn_text">Add Source</string>
 
     <string-array name="default_nav_array">
         <item>Personal</item>
