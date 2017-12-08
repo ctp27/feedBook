@@ -89,19 +89,28 @@
                 android:text="Rate this Article"
                 android:textAlignment="center"/>
 
-            <RatingBar
-                android:id="@+id/rat"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="210dp"
                 android:layout_height="wrap_content"
-                android:text="Ratings"
-                android:layout_below="@+id/article_rating"
-                android:numStars="5"
-                android:stepSize="1.0"
-                android:layout_gravity="center"
-                android:progressTint="@android:color/holo_orange_light"
-                android:progressBackgroundTint="@android:color/darker_gray"
-                android:secondaryProgressTint="@android:color/holo_red_dark"
-                />
+                android:orientation="vertical"
+                android:layout_gravity="center">
+
+                <RatingBar
+                    android:id="@+id/rat"
+                    android:text="Ratings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:numStars="5"
+                    android:stepSize="1"
+                    style="?android:attr/ratingBarStyle"
+                    android:layout_gravity="center"
+                    android:progressTint="@android:color/holo_orange_light"
+                    android:progressBackgroundTint="@android:color/darker_gray"
+                    android:secondaryProgressTint="@android:color/holo_red_dark"
+                    />
+
+            </LinearLayout>
+
 
             <Button
                 android:id="@+id/article_link_button"

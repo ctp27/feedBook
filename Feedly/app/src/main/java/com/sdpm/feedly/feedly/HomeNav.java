@@ -954,8 +954,12 @@ public class HomeNav extends AppCompatActivity implements ViewPager.OnPageChange
 
     @Override
     public void onSourceViewClick(Feed f) {
+        if(isDefaultTodaysMessage){
+            hideDefaultTodaysMessage();
+        }
         ArrayList<Feed> searchFeeds = new ArrayList<Feed>();
         searchFeeds.add(f);
+
         displaySearch(searchFeeds);
         drawer.closeDrawer(Gravity.RIGHT);
 
