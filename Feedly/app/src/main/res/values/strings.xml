@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Login Page -->
-    <string name="app_name">Feedly</string>
+    <string name="app_name">feedBook</string>
     <string name="email_id">Email-ID</string>
     <string name="password">password</string>
     <string name="button_login">Login</string>
