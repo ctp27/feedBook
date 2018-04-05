@@ -7,14 +7,14 @@ Users can sort the articles within a feed by the number of views or ratings.
 The app also suggests articles based on the users interests. 
 
 
-![Screenshot1](screenshots/screen_1.png) ![Screenshot2](screenshots/screen_2.png) ![Screenshot3](screenshots/screen_3.png)
-![Screenshot4](screenshots/screen_4.png) ![Screenshot5](screenshots/screen_5.png) ![Screenshot6](screenshots/screen_6.png) 
+![Screenshot1](screenshots/screen_1.jpg=100x300) ![Screenshot2](screenshots/screen_2.jpg=100x300) ![Screenshot3](screenshots/screen_3.jpg=100x300)
+![Screenshot4](screenshots/screen_4.jpg=100x300) ![Screenshot5](screenshots/screen_5.png=100x300) ![Screenshot6](screenshots/screen_6.png=100x300) 
 
 
 The application provides an interactive user interface to easily browse the different feeds
 
 
-![interface_gif](screenshots/feedly_1.gif)
+![interface_gif](screenshots/feedly_1.gif=100x300)
 
 
 
