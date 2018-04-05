@@ -14,7 +14,7 @@ The app also suggests articles based on the users interests.
 The application provides an interactive user interface to easily browse the different feeds
 
 
-![interface_gif](screenshots/feedly_1.gif=100x300)
+![interface_gif](screenshots/feedly_1.gif)
 
 
 
